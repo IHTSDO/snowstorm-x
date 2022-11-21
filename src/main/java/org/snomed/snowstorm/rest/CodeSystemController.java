@@ -59,14 +59,15 @@ public class CodeSystemController {
 	private boolean showInternalReleasesByDefault;
 
 	@Operation(summary = "Create a code system",
-			description = "Required fields are shortName and branch.\n" +
-					"shortName should use format SNOMEDCT-XX where XX is the country code for national extensions.\n" +
-					"dependantVersion uses effectiveTime format and can be used if the new code system depends on an older version of the parent code system, " +
-					"otherwise the latest version will be selected automatically.\n" +
-					"defaultLanguageCode can be used to force the sort order of the languages listed under the codesystem, " +
-					"otherwise these are sorted by the number of active translated terms.\n" +
-					"maintainerType has no effect on API behaviour but can be used in frontend applications for extension categorisation.\n" +
-					"defaultLanguageReferenceSet has no effect API behaviour but can be used by browsers to reflect extension preferences. ")
+			description = "Required fields are **shortName** and **branchPath**.  \n\n" +
+					"- **shortName** should use format SNOMEDCT-XX where XX is the country code for national extensions.  \n" +
+					"- **dependantVersion** uses effectiveTime format and can be used if the new code system depends on an older version of the parent code system, " +
+					"otherwise the latest version will be selected automatically.  \n" +
+					"- **defaultLanguageCode** can be used to force the sort order of the languages listed under the codesystem, " +
+					"otherwise these are sorted by the number of active translated terms.  \n" +
+					"- **maintainerType** has no effect on API behaviour but can be used in frontend applications for extension categorisation.  \n" +
+					"- **defaultLanguageReferenceSet** has no effect API behaviour but can be used by browsers to reflect extension preferences.  \n" +
+					"- **postcoordinationLevel** should be set to 0 unless creating a Postcoordinated Expression Repository. ")
 	@PostMapping
 	@PreAuthorize("hasPermission('ADMIN', #codeSystem.branchPath)")
 	public ResponseEntity<Void> createCodeSystem(@RequestBody CodeSystemCreate codeSystem) {
