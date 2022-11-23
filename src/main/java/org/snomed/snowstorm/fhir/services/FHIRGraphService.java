@@ -56,7 +56,7 @@ public class FHIRGraphService {
 	}
 
 	private GraphCriteria getGraphCriteria(FHIRCodeSystemVersion codeSystemVersion, PageRequest page) {
-		if (codeSystemVersion.isSnomed()) {
+		if (codeSystemVersion.isOnSnomedBranch()) {
 			BoolQueryBuilder criteria = snomedVersionControlHelper.getBranchCriteria(codeSystemVersion.getSnomedBranch()).getEntityBranchCriteria(QueryConcept.class);
 			criteria.must(termQuery(QueryConcept.Fields.STATED, false));
 			return new GraphCriteria(QueryConcept.class, criteria, page);
