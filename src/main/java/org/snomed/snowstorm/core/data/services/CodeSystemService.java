@@ -12,7 +12,6 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.ihtsdo.drools.helper.IdentifierHelper;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,6 +141,13 @@ public class CodeSystemService {
 		if (findByBranchPath(branchPath).isPresent()) {
 			throw new IllegalArgumentException("A code system already exists on branch path " + branchPath);
 		}
+		String uriModuleId = newCodeSystem.getUriModuleId();
+		if (uriModuleId != null) {
+			CodeSystem byModule = findByUriModule(uriModuleId);
+			if (byModule != null) {
+				throw new IllegalArgumentException(format("A code system already exists with URI module %s : %s ", uriModuleId, byModule.getShortName()));
+			}
+		}
 		String parentPath = PathUtil.getParentPath(newCodeSystem.getBranchPath());
 		CodeSystem parentCodeSystem = null;
 		if (parentPath != null) {
@@ -187,6 +193,12 @@ public class CodeSystemService {
 			logger.info("Creating Code System branch '{}'.", branchPath);
 			sBranchService.create(branchPath);
 		}
+
+		// Save URI module as default authoring module
+		if (uriModuleId != null) {
+			branchService.updateMetadata(branchPath, new Metadata().putString(DEFAULT_MODULE_ID, uriModuleId));
+		}
+
 		repository.save(newCodeSystem);
 		logger.info("Code System '{}' created.", newCodeSystem.getShortName());
 		return newCodeSystem;
@@ -335,6 +347,10 @@ public class CodeSystemService {
 		return codeSystems;
 	}
 
+	public List<CodeSystem> findAllBrief() {
+		return repository.findAll(PageRequest.of(0, 10_000, Sort.by(CodeSystem.Fields.SHORT_NAME))).getContent();
+	}
+
 	@Cacheable("code-system-branches")
 	public List<String> findAllCodeSystemBranchesUsingCache() {
 		return repository.findAll(PageRequest.of(0, 1000, Sort.by(CodeSystem.Fields.SHORT_NAME))).getContent().stream().map(CodeSystem::getBranchPath).sorted().collect(Collectors.toList());
@@ -349,19 +365,6 @@ public class CodeSystemService {
 
 			// Lookup latest version with an effective date equal or less than today
 			codeSystem.setLatestVersion(findLatestVisibleVersion(codeSystem.getShortName()));
-
-			// Set default module to help FHIR API
-			if (codeSystem.getUriModuleId() == null) {
-				String moduleId = codeSystemDefaultConfigurationService.getDefaultModuleId(codeSystem.getShortName());
-				if (moduleId == null) {
-					moduleId = latestBranch.getMetadata().getString(DEFAULT_MODULE_ID);
-				}
-				if (IdentifierHelper.isConceptId(moduleId)) {
-					logger.info("Automatically setting URI Module ID for CodeSystem {} to {}", codeSystem.getShortCode(), moduleId);
-					codeSystem.setUriModuleId(moduleId);
-					doUpdate(codeSystem);
-				}
-			}
 
 			// Pull from cache
 			Pair<Date, CodeSystem> dateCodeSystemPair = contentInformationCache.get(branchPath);
@@ -511,7 +514,7 @@ public class CodeSystemService {
 		return codeSystem.orElse(null);
 	}
 
-	public CodeSystem findByDefaultModule(String moduleId) {
+	public CodeSystem findByUriModule(String moduleId) {
 		CodeSystem codeSystem = repository.findByUriModuleId(moduleId);
 		return codeSystem != null ? find(codeSystem.getShortName()) : null;
 	}

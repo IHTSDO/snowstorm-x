@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AbstractFHIRTest {
 
 	public static final String SHOULD_HAVE_THROWN_EXCEPTION_BEFORE_THIS_LINE = "Should have thrown exception before this line.";
+
 	@LocalServerPort
 	protected int port = 8080;
 

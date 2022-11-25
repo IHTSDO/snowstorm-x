@@ -23,7 +23,7 @@ import static org.snomed.snowstorm.fhir.config.FHIRConstants.SNOMED_URI;
  */
 @Document(indexName = "codesystem")
 @JsonPropertyOrder({"name", "owner", "shortName", "branchPath", "uriModuleId", "uri", "dependantVersionEffectiveTime", "dailyBuildAvailable", "latestDailyBuild",
-		"postcoordinated", "postcoordinationLevel", "countryCode", "defaultLanguageCode", "defaultLanguageReferenceSets", "maintainerType",
+		"postcoordinated", "maximumPostcoordinationLevel", "countryCode", "defaultLanguageCode", "defaultLanguageReferenceSets", "maintainerType",
 		"latestVersion", "languages", "modules"})
 public class CodeSystem implements CodeSystemCreate {
 
@@ -70,7 +70,7 @@ public class CodeSystem implements CodeSystemCreate {
 	private String latestDailyBuild;
 
 	@Field(type = FieldType.Short)
-	private short postcoordinationLevel;
+	private short maximumPostcoordinationLevel;
 
 	@Transient
 	private Integer dependantVersionEffectiveTime;
@@ -122,8 +122,9 @@ public class CodeSystem implements CodeSystemCreate {
 		return uriModuleId;
 	}
 
-	public void setUriModuleId(String uriModuleId) {
+	public CodeSystem setUriModuleId(String uriModuleId) {
 		this.uriModuleId = uriModuleId;
+		return this;
 	}
 
 	/**
@@ -216,18 +217,24 @@ public class CodeSystem implements CodeSystemCreate {
 	 * Level 4 is not yet defined or supported.
 	 * @return the level of postcoordination supported in this code system, 0 means disabled.
 	 */
-	public Short getPostcoordinationLevel() {
-		return postcoordinationLevel != 0 ? postcoordinationLevel : null;
+	public Short getMaximumPostcoordinationLevel() {
+		return maximumPostcoordinationLevel != 0 ? maximumPostcoordinationLevel : null;
 	}
 
-	public CodeSystem setPostcoordinationLevel(short postcoordinationLevel) {
-		this.postcoordinationLevel = postcoordinationLevel;
+	public CodeSystem setMaximumPostcoordinationLevel(short maximumPostcoordinationLevel) {
+		this.maximumPostcoordinationLevel = maximumPostcoordinationLevel;
 		return this;
 	}
 
 	public Boolean isPostcoordinated() {
-		return postcoordinationLevel != 0 ? true : null;
+		return maximumPostcoordinationLevel != 0 ? true : null;
 	}
+
+	@JsonIgnore
+	public boolean isPostcoordinatedNullSafe() {
+		return maximumPostcoordinationLevel != 0;
+	}
+
 
 	public Integer getDependantVersionEffectiveTime() {
 		return dependantVersionEffectiveTime;
