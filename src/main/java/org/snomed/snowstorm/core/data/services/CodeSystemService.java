@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.Aggregation;
@@ -86,6 +87,7 @@ public class CodeSystemService {
 	private final ValidatorService validatorService;
 	private final ModelMapper modelMapper;
 	private final JmsTemplate jmsTemplate;
+	private final AdminOperationsService adminOperationsService;
 
 	@Value("${jms.queue.prefix}")
 	private String jmsQueuePrefix;
@@ -118,7 +120,8 @@ public class CodeSystemService {
 			VersionControlHelper versionControlHelper,
 			ValidatorService validatorService,
 			ModelMapper modelMapper,
-			JmsTemplate jmsTemplate) {
+			JmsTemplate jmsTemplate,
+			@Lazy AdminOperationsService adminOperationsService) {
 		this.repository = repository;
 		this.versionRepository = versionRepository;
 		this.codeSystemConfigurationService = codeSystemConfigurationService;
@@ -132,6 +135,7 @@ public class CodeSystemService {
 		this.validatorService = validatorService;
 		this.modelMapper = modelMapper;
 		this.jmsTemplate = jmsTemplate;
+		this.adminOperationsService = adminOperationsService;
 	}
 
 	// Cache to prevent expensive aggregations. Entry per branch. Expires if there is a new commit.
@@ -711,7 +715,7 @@ public class CodeSystemService {
 
 	@PreAuthorize("hasPermission('ADMIN', #codeSystem.branchPath)")
 	@CacheEvict(value = {"code-systems", "code-system-branches"}, allEntries = true)
-	public void deleteCodeSystemAndVersions(CodeSystem codeSystem) {
+	public void deleteCodeSystemAndVersions(CodeSystem codeSystem, boolean deleteBranches) {
 		if (codeSystem.getBranchPath().equals("MAIN")) {
 			throw new IllegalArgumentException("The root code system can not be deleted. " +
 					"If you need to start again delete all indices and restart Snowstorm.");
@@ -720,6 +724,12 @@ public class CodeSystemService {
 		List<CodeSystemVersion> allVersions = findAllVersions(codeSystem.getShortName(), true, false);
 		versionRepository.deleteAll(allVersions);
 		repository.delete(codeSystem);
+		if (deleteBranches) {
+			for (CodeSystemVersion version : allVersions) {
+				adminOperationsService.hardDeleteBranch(version.getBranchPath());
+			}
+			adminOperationsService.hardDeleteBranch(codeSystem.getBranchPath());
+		}
 		logger.info("Deleted Code System '{}' and versions.", codeSystem.getShortName());
 	}
 
