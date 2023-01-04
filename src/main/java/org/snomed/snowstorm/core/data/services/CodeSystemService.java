@@ -30,6 +30,7 @@ import org.snomed.snowstorm.rest.pojo.CodeSystemUpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -103,6 +104,10 @@ public class CodeSystemService {
 
 	@Autowired
 	private JmsTemplate jmsTemplate;
+
+	@Autowired
+	@Lazy
+	private AdminOperationsService adminOperationsService;
 
 	@Value("${codesystem.all.latest-version.allow-future}")
 	private boolean latestVersionCanBeFuture;
@@ -633,7 +638,7 @@ public class CodeSystemService {
 	}
 
 	@PreAuthorize("hasPermission('ADMIN', #codeSystem.branchPath)")
-	public void deleteCodeSystemAndVersions(CodeSystem codeSystem) {
+	public void deleteCodeSystemAndVersions(CodeSystem codeSystem, boolean deleteBranches) {
 		if (codeSystem.getBranchPath().equals("MAIN")) {
 			throw new IllegalArgumentException("The root code system can not be deleted. " +
 					"If you need to start again delete all indices and restart Snowstorm.");
@@ -642,6 +647,12 @@ public class CodeSystemService {
 		List<CodeSystemVersion> allVersions = findAllVersions(codeSystem.getShortName(), true, false);
 		versionRepository.deleteAll(allVersions);
 		repository.delete(codeSystem);
+		if (deleteBranches) {
+			for (CodeSystemVersion version : allVersions) {
+				adminOperationsService.hardDeleteBranch(version.getBranchPath());
+			}
+			adminOperationsService.hardDeleteBranch(codeSystem.getBranchPath());
+		}
 		logger.info("Deleted Code System '{}' and versions.", codeSystem.getShortName());
 	}
 
