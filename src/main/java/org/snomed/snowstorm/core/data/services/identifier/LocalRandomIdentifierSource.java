@@ -65,6 +65,7 @@ public class LocalRandomIdentifierSource implements IdentifierSource {
 							alreadyExistingIdentifiers.addAll(findExistingIdentifiersInAnyBranch(newIdentifierBatch, Relationship.class, Relationship.Fields.RELATIONSHIP_ID));
 							break;
 						case "06":
+						case "16":
 							// Expression identifier
 							alreadyExistingIdentifiers.addAll(findExistingIdentifiersInAnyBranch(newIdentifierBatch, ReferenceSetMember.class, ReferenceSetMember.Fields.REFERENCED_COMPONENT_ID));
 							break;
