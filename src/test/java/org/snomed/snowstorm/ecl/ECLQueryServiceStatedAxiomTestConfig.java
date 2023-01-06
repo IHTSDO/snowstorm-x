@@ -10,6 +10,8 @@ import org.snomed.snowstorm.core.data.domain.Relationship;
 import org.snomed.snowstorm.core.data.services.*;
 
 import jakarta.annotation.PostConstruct;
+import org.snomed.snowstorm.core.data.services.ServiceException;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
