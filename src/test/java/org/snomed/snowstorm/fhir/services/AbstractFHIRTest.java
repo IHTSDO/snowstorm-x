@@ -98,7 +98,7 @@ public class AbstractFHIRTest {
 	protected void expectResponse(ResponseEntity<String> response, int expectedStatusCode, String expectBodyContains) {
 		String body = response.getBody();
 		assertEquals(expectedStatusCode, response.getStatusCodeValue(), () -> format("Expected status code '%s' but was '%s', body: '%s'",
-				expectedStatusCode, response.getStatusCode(), body));
+				expectedStatusCode, response.getStatusCodeValue(), body));
 		if (expectBodyContains != null) {
 			assertNotNull(body);
 			assertTrue(body.contains(expectBodyContains), () -> format("Expected body to contain '%s' but was '%s'", expectBodyContains, body));
