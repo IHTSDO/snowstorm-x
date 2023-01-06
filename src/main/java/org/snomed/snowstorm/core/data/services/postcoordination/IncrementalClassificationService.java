@@ -67,7 +67,7 @@ public class IncrementalClassificationService {
 		// Classify
 		final RelationshipChangeProcessor changeProcessor;
 		try {
-			changeProcessor = classify(axioms);
+			changeProcessor = classify(axioms, branch);
 		} catch (ReasonerServiceException e) {
 			throw new ServiceException("Failed to classify expression.", e);
 		}
