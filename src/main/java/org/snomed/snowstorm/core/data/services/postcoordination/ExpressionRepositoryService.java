@@ -42,16 +42,13 @@ public class ExpressionRepositoryService {
 	private ExpressionParser expressionParser;
 
 	@Autowired
-	private ExpressionTransformationService transformationService;
+	private ExpressionTransformationAndValidationService transformationService;
 
 	@Autowired
 	private ReferenceSetMemberService memberService;
 
 	@Autowired
 	private MRCMService mrcmService;
-
-	@Autowired
-	private ConceptService conceptService;
 
 	@Autowired
 	private VersionControlHelper versionControlHelper;
@@ -130,7 +127,7 @@ public class ExpressionRepositoryService {
 		return parseValidateTransformAndClassifyExpressions(Collections.singletonList(originalCloseToUserForm), branch, namespace).get(0);
 	}
 
-	public List<PostCoordinatedExpression> parseValidateTransformAndClassifyExpressions(List<String> originalCloseToUserForms, String branch, int namespace) throws ServiceException {
+	public List<PostCoordinatedExpression> parseValidateTransformAndClassifyExpressions(List<String> originalCloseToUserForms, String branch, int namespace) {
 		List<PostCoordinatedExpression> expressionOutcomes = new ArrayList<>();
 		for (String originalCloseToUserForm : originalCloseToUserForms) {
 			TimerUtil timer = new TimerUtil("exp");
@@ -140,12 +137,10 @@ public class ExpressionRepositoryService {
 				ComparableExpression closeToUserFormExpression = expressionParser.parseExpression(originalCloseToUserForm);
 				timer.checkpoint("Parse expression");
 
-				// Validate expression against MRCM
-				mrcmAttributeRangeValidation(closeToUserFormExpression, context);
-				timer.checkpoint("MRCM validation");
-
+				// Validate and transform expression to classifiable form if needed.
+				// This groups any 'loose' attributes
 				final ComparableExpression classifiableFormExpression;
-				classifiableFormExpression = transformationService.transform(closeToUserFormExpression, context);
+				classifiableFormExpression = transformationService.validateAndTransform(closeToUserFormExpression, context);
 				timer.checkpoint("Transformation");
 
 				// Assign identifier
@@ -198,97 +193,6 @@ public class ExpressionRepositoryService {
 				closeToUserFormMember.getAdditionalField(ReferenceSetMember.PostcoordinatedExpressionFields.EXPRESSION), classifiableFormMember.getAdditionalField(ReferenceSetMember.PostcoordinatedExpressionFields.EXPRESSION), null);
 	}
 
-	private void mrcmAttributeRangeValidation(ComparableExpression expression, ExpressionContext context) throws ServiceException {
-		doMrcmAttributeRangeValidation(expression, null, context);
-	}
-
-	private void doMrcmAttributeRangeValidation(Expression expression, String expressionWithinAttributeId, ExpressionContext context) throws ServiceException {
-
-		// Check that focus concepts exist
-		List<String> focusConcepts = expression.getFocusConcepts();
-		checkThatConceptsExist(focusConcepts, context);
-		context.getTimer().checkpoint("Focus concepts exist");
-
-		if (expressionWithinAttributeId != null) {
-			for (String focusConcept : focusConcepts) {
-				assertAttributeValueWithinRange(expressionWithinAttributeId, focusConcept, context);
-			}
-		}
-		context.getTimer().checkpoint("Attributes within range");
-
-		// Check that attribute types are in MRCM
-		// and that attribute values are within the attribute range
-		List<Attribute> attributes = expression.getAttributes();
-		if (attributes != null) {
-			// Grab all attributes in MRCM for this content type
-			Set<String> attributeDomainAttributeIds = context.getBranchMRCM().getAttributeDomainsForContentType(ContentType.POSTCOORDINATED)
-					.stream().map(AttributeDomain::getReferencedComponentId).collect(Collectors.toSet());
-			context.getTimer().checkpoint("Load MRCM attribute");
-			for (Attribute attribute : attributes) {
-				String attributeId = attribute.getAttributeId();
-				// Active attribute exists in MRCM
-				if (!attributeDomainAttributeIds.contains(attributeId)) {
-					Map<String, String> conceptIdAndFsnTerm = getConceptIdAndTerm(Collections.singleton(attributeId), context);
-					throw new IllegalArgumentException(format("Attribute %s is not present in the permitted concept model.", conceptIdAndFsnTerm.get(attributeId)));
-				}
-				AttributeValue attributeValue = attribute.getAttributeValue();
-				if (!attributeValue.isNested()) {
-					String attributeValueId = attributeValue.getConceptId();
-					assertAttributeValueWithinRange(attributeId, attributeValueId, context);
-				} else {
-					Expression nestedExpression = attributeValue.getNestedExpression();
-					doMrcmAttributeRangeValidation(nestedExpression, attributeId, context);
-				}
-			}
-			context.getTimer().checkpoint("Attribute validation");
-		}
-	}
-
-	private void assertAttributeValueWithinRange(String attributeId, String attributeValueId, ExpressionContext context) throws ServiceException {
-		// Value within attribute range
-		TimerUtil timer = new TimerUtil("attribute validation");
-		Collection<Long> longs = mrcmService.retrieveAttributeValueIds(ContentType.POSTCOORDINATED, attributeId, attributeValueId,
-				context.getBranch(), null, context.getBranchMRCM(), context.getDependantReleaseBranchCriteria());
-		timer.checkpoint("retrieveAttributeValueIds");
-		if (longs.isEmpty()) {
-			Map<String, String> conceptIdAndFsnTerm = getConceptIdAndTerm(Sets.newHashSet(attributeId, attributeValueId), context);
-			context.getTimer().checkpoint("getConceptIdAndTerm");
-			timer.checkpoint("getConceptIdAndTerm");
-			String attributeValueFromStore = conceptIdAndFsnTerm.get(attributeValueId);
-			if (attributeValueFromStore == null) {
-				throwConceptNotFound(attributeValueId);
-			} else {
-				Set<AttributeRange> mandatoryAttributeRanges = context.getBranchMRCM().getMandatoryAttributeRanges(attributeId, ContentType.POSTCOORDINATED);
-				timer.checkpoint("getMandatoryAttributeRanges");
-
-				StringBuilder buffer = new StringBuilder();
-				for (AttributeRange mandatoryAttributeRange : mandatoryAttributeRanges) {
-					if (buffer.length() > 0) {
-						buffer.append(" OR ");
-					}
-					buffer.append("(").append(mandatoryAttributeRange.getRangeConstraint()).append(")");
-				}
-				throw new IllegalArgumentException(format("Value %s is not within the permitted range of attribute %s - %s.",
-						attributeValueFromStore, conceptIdAndFsnTerm.get(attributeId), buffer));
-			}
-		}
-		context.getTimer().checkpoint("retrieveAttributeValues for " + attributeId + " = " + attributeValueId);
-	}
-
-	private Map<String, String> getConceptIdAndTerm(Set<String> conceptIds, ExpressionContext context) {
-		Map<String, ConceptMini> resultsMap = conceptService.findConceptMinis(context.getBranchCriteria(), conceptIds, Config.DEFAULT_LANGUAGE_DIALECTS).getResultsMap();
-		return resultsMap.values().stream().collect(Collectors.toMap(ConceptMini::getConceptId, ConceptMini::getIdAndFsnTerm));
-	}
-
-	private void checkThatConceptsExist(Collection<String> concepts, ExpressionContext context) {
-		if (concepts != null) {
-			final Collection<String> nonExistentConceptIds = conceptService.getNonExistentConceptIds(concepts, context.getBranchCriteria());
-			if (!nonExistentConceptIds.isEmpty()) {
-				throwConceptNotFound(nonExistentConceptIds.iterator().next());
-			}
-		}
-	}
-
 	private String createHumanReadableExpression(String expression, ExpressionContext context) throws ServiceException {
 		if (expression != null) {
 			return createHumanReadableExpressions(Lists.newArrayList(expression), context).get(0);
@@ -305,7 +209,4 @@ public class ExpressionRepositoryService {
 		return transformationService.addHumanPTsToExpressionStrings(expressions, allConceptIds, context);
 	}
 
-	private void throwConceptNotFound(String concept) {
-		throw new NotFoundException(format("Concept %s not found on this branch.", concept));
-	}
 }
