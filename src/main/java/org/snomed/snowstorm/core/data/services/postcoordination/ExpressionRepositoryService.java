@@ -4,14 +4,7 @@ import com.google.common.collect.Lists;
 import io.kaicode.elasticvc.api.BranchService;
 import io.kaicode.elasticvc.api.VersionControlHelper;
 import org.elasticsearch.common.util.set.Sets;
-import org.snomed.languages.scg.domain.model.Attribute;
-import org.snomed.languages.scg.domain.model.AttributeValue;
-import org.snomed.languages.scg.domain.model.Expression;
-import org.snomed.snowstorm.config.Config;
-import org.snomed.snowstorm.core.data.domain.ConceptMini;
 import org.snomed.snowstorm.core.data.domain.ReferenceSetMember;
-import org.snomed.snowstorm.core.data.services.ConceptService;
-import org.snomed.snowstorm.core.data.services.NotFoundException;
 import org.snomed.snowstorm.core.data.services.ReferenceSetMemberService;
 import org.snomed.snowstorm.core.data.services.ServiceException;
 import org.snomed.snowstorm.core.data.services.identifier.IdentifierHelper;
@@ -21,9 +14,6 @@ import org.snomed.snowstorm.core.data.services.postcoordination.model.Comparable
 import org.snomed.snowstorm.core.data.services.postcoordination.model.PostCoordinatedExpression;
 import org.snomed.snowstorm.core.util.TimerUtil;
 import org.snomed.snowstorm.mrcm.MRCMService;
-import org.snomed.snowstorm.mrcm.model.AttributeDomain;
-import org.snomed.snowstorm.mrcm.model.AttributeRange;
-import org.snomed.snowstorm.mrcm.model.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -32,8 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static java.lang.String.format;
 
 @Service
 public class ExpressionRepositoryService {
