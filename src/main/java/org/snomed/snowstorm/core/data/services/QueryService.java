@@ -18,7 +18,6 @@ import org.snomed.snowstorm.core.util.PageHelper;
 import org.snomed.snowstorm.core.util.SearchAfterPage;
 import org.snomed.snowstorm.core.util.StreamUtil;
 import org.snomed.snowstorm.core.util.TimerUtil;
-import org.snomed.snowstorm.ecl.ConceptSelectorHelper;
 import org.snomed.snowstorm.ecl.ECLQueryService;
 import org.snomed.snowstorm.ecl.domain.expressionconstraint.SExpressionConstraint;
 import org.snomed.snowstorm.ecl.domain.expressionconstraint.SSubExpressionConstraint;
@@ -352,7 +351,7 @@ public class QueryService implements ApplicationContextAware {
 	}
 
 	public Set<Long> findAncestorIds(String conceptId, String path, boolean stated) {
-		return findAncestorIds(versionControlHelper.getBranchCriteria(path), path, stated, conceptId);
+		return findAncestorIds(versionControlHelper.getBranchCriteria(path), stated, conceptId);
 	}
 
 	public Set<Long> findParentIds(BranchCriteria branchCriteria, boolean stated, Collection<Long> conceptIds) {
@@ -369,7 +368,7 @@ public class QueryService implements ApplicationContextAware {
 		return concepts.isEmpty() ? Collections.emptySet() : concepts.stream().flatMap(queryConcept -> queryConcept.getParents().stream()).collect(Collectors.toSet());
 	}
 
-	public Set<Long> findAncestorIds(BranchCriteria branchCriteria, String path, boolean stated, String conceptId) {
+	public Set<Long> findAncestorIds(BranchCriteria branchCriteria, boolean stated, String conceptId) {
 		final NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
 				.withQuery(boolQuery()
 						.must(branchCriteria.getEntityBranchCriteria(QueryConcept.class))
@@ -382,7 +381,7 @@ public class QueryService implements ApplicationContextAware {
 				.stream().map(SearchHit::getContent).collect(Collectors.toList());
 		if (concepts.size() > 1) {
 			logger.error("More than one index concept found {}", concepts);
-			throw new IllegalStateException("More than one query-index-concept found for id " + conceptId + " on branch " + path + ".");
+			throw new IllegalStateException("More than one query-index-concept found for id " + conceptId + " on branch " + branchCriteria.getBranchPath() + ".");
 		}
 		return !concepts.isEmpty() ? concepts.get(0).getAncestors() : Collections.emptySet();
 	}
