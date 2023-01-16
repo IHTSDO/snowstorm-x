@@ -15,10 +15,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.snomed.snowstorm.core.data.domain.CodeSystem;
-import org.snomed.snowstorm.core.data.domain.CodeSystemVersion;
-import org.snomed.snowstorm.core.data.domain.Description;
-import org.snomed.snowstorm.core.data.domain.ReferenceSetMember;
+import org.snomed.snowstorm.core.data.domain.*;
 import org.snomed.snowstorm.core.data.repositories.CodeSystemRepository;
 import org.snomed.snowstorm.core.data.repositories.CodeSystemVersionRepository;
 import org.snomed.snowstorm.core.data.services.pojo.CodeSystemDefaultConfiguration;
@@ -474,6 +471,12 @@ public class CodeSystemService {
 					.getBuckets().get("module");
 			List<LanguageDialect> languageDialects = acceptableLanguageCodes.stream().map(LanguageDialect::new).collect(Collectors.toList());
 			codeSystem.setModules(conceptService.findConceptMinis(branchCriteria, modulesOfActiveMembers.keySet(), languageDialects).getResultsMap().values());
+		}
+
+		if (codeSystem.getUriModuleId() == null) {
+			// Populate moduleId
+			String uriModuleId = Concepts.CORE_MODULE;
+
 		}
 
 		// Add to cache
