@@ -146,7 +146,7 @@ public class ReferenceSetMemberService extends ComponentService {
 	 */
 	public Page<ReferenceSetMember> findMembers(String branch, MemberSearchRequest searchRequest, PageRequest pageRequest) {
 		BranchCriteria branchCriteria = versionControlHelper.getBranchCriteria(branch);
-		NativeSearchQuery query = new NativeSearchQueryBuilder().withQuery(buildMemberQuery(searchRequest, branch, branchCriteria)).withPageable(pageRequest).build();
+		NativeSearchQuery query = new NativeSearchQueryBuilder().withQuery(buildMemberQuery(searchRequest, branchCriteria)).withPageable(pageRequest).build();
 		query.setTrackTotalHits(true);
 		SearchHits<ReferenceSetMember> searchHits = elasticsearchTemplate.search(query, ReferenceSetMember.class);
 		PageImpl<ReferenceSetMember> referenceSetMembers = new PageImpl<>(searchHits.get().map(SearchHit::getContent).collect(Collectors.toList()), query.getPageable(), searchHits.getTotalHits());
@@ -179,13 +179,13 @@ public class ReferenceSetMemberService extends ComponentService {
 		}
 	}
 
-	public Page<ReferenceSetMember> findMembers(String branch, BranchCriteria branchCriteria, MemberSearchRequest searchRequest, PageRequest pageRequest) {
-		NativeSearchQuery query = new NativeSearchQueryBuilder().withQuery(buildMemberQuery(searchRequest, branch, branchCriteria)).withPageable(pageRequest).build();
+	public Page<ReferenceSetMember> findMembers(BranchCriteria branchCriteria, MemberSearchRequest searchRequest, PageRequest pageRequest) {
+		NativeSearchQuery query = new NativeSearchQueryBuilder().withQuery(buildMemberQuery(searchRequest, branchCriteria)).withPageable(pageRequest).build();
 		SearchHits<ReferenceSetMember> searchHits = elasticsearchTemplate.search(query, ReferenceSetMember.class);
 		return new PageImpl<>(searchHits.get().map(SearchHit::getContent).collect(Collectors.toList()), pageRequest, searchHits.getTotalHits());
 	}
 
-	private BoolQueryBuilder buildMemberQuery(MemberSearchRequest searchRequest, String branch, BranchCriteria branchCriteria) {
+	private BoolQueryBuilder buildMemberQuery(MemberSearchRequest searchRequest, BranchCriteria branchCriteria) {
 		BoolQueryBuilder query = boolQuery().must(branchCriteria.getEntityBranchCriteria(ReferenceSetMember.class));
 
 		if (searchRequest.getActive() != null) {
@@ -202,12 +202,12 @@ public class ReferenceSetMemberService extends ComponentService {
 		
 		String referenceSet = searchRequest.getReferenceSet();
 		if (!Strings.isNullOrEmpty(referenceSet)) {
-			List<Long> conceptIds = getConceptIds(branch, branchCriteria, referenceSet);
+			List<Long> conceptIds = getConceptIds(branchCriteria, referenceSet);
 			query.must(termsQuery(ReferenceSetMember.Fields.REFSET_ID, conceptIds));
 		}
 		String module = searchRequest.getModule();
 		if (!Strings.isNullOrEmpty(module)) {
-			List<Long> conceptIds = getConceptIds(branch, branchCriteria, module);
+			List<Long> conceptIds = getConceptIds(branchCriteria, module);
 			query.must(termsQuery(ReferenceSetMember.Fields.MODULE_ID, conceptIds));
 		}
 		Collection<? extends Serializable> referencedComponentIds = searchRequest.getReferencedComponentIds();
@@ -249,7 +249,7 @@ public class ReferenceSetMemberService extends ComponentService {
 		return query;
 	}
 
-	private List<Long> getConceptIds(String branch, BranchCriteria branchCriteria, String conceptIdOrECL) {
+	private List<Long> getConceptIds(BranchCriteria branchCriteria, String conceptIdOrECL) {
 		List<Long> conceptIds;
 		if (conceptIdOrECL.matches("\\d+")) {
 			conceptIds = Collections.singletonList(parseLong(conceptIdOrECL));
@@ -658,7 +658,7 @@ public class ReferenceSetMemberService extends ComponentService {
 
 	public PageWithBucketAggregations<ReferenceSetMember> findReferenceSetMembersWithAggregations(String branch, PageRequest pageRequest, MemberSearchRequest searchRequest) {
 		BranchCriteria branchCriteria = versionControlHelper.getBranchCriteria(branch);
-		BoolQueryBuilder query = buildMemberQuery(searchRequest, branch, branchCriteria);
+		BoolQueryBuilder query = buildMemberQuery(searchRequest, branchCriteria);
 		NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
 				.withQuery(query)
 				.withPageable(pageRequest)

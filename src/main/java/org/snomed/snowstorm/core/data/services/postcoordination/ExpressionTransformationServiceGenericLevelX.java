@@ -229,7 +229,7 @@ public class ExpressionTransformationServiceGenericLevelX {
 					.stream()
 					.map(AttributeDomain::getReferencedComponentId).collect(Collectors.toSet());
 			if (domainAttributeIds.contains(LATERALITY)) {
-				if (memberService.findMembers(context.getBranch(), context.getBranchCriteria(),
+				if (memberService.findMembers(context.getBranchCriteria(),
 						new MemberSearchRequest()
 								.active(true).referenceSet(Concepts.LATERALIZABLE_BODY_STRUCTURE_REFERENCE_SET).referencedComponentId(conceptId.toString()), PAGE_OF_ONE).isEmpty()) {
 					// Concept not lateralizable, remove the laterality attribute

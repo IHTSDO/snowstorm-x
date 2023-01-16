@@ -1,14 +1,14 @@
 package org.snomed.snowstorm.core.data.services.postcoordination;
 
 import com.google.common.collect.Lists;
+import io.kaicode.elasticvc.api.BranchCriteria;
 import io.kaicode.elasticvc.api.BranchService;
 import io.kaicode.elasticvc.api.VersionControlHelper;
 import io.kaicode.elasticvc.domain.Commit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.snomed.languages.scg.domain.model.DefinitionStatus;
-import org.snomed.snowstorm.core.data.domain.Concept;
-import org.snomed.snowstorm.core.data.domain.Concepts;
-import org.snomed.snowstorm.core.data.domain.ReferenceSetMember;
-import org.snomed.snowstorm.core.data.domain.Relationship;
+import org.snomed.snowstorm.core.data.domain.*;
 import org.snomed.snowstorm.core.data.services.ConceptService;
 import org.snomed.snowstorm.core.data.services.ReferenceSetMemberService;
 import org.snomed.snowstorm.core.data.services.ServiceException;
@@ -61,6 +61,8 @@ public class ExpressionRepositoryService {
 
 	@Autowired
 	private ConceptService conceptService;
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	// 1119435002 | Canonical close to user form expression reference set (foundation metadata concept) |
 	// referencedComponentId - a generated SCTID for expression
@@ -238,7 +240,7 @@ public class ExpressionRepositoryService {
 
 	private void populateHumanReadableForms(PostCoordinatedExpression expressionForms, ExpressionContext context) throws ServiceException {
 		final List<String> humanReadableExpressions = createHumanReadableExpressions(
-				Lists.newArrayList(expressionForms.getClassifiableForm(), expressionForms.getNecessaryNormalForm()), context);
+				Lists.newArrayList(expressionForms.getClassifiableForm(), expressionForms.getNecessaryNormalForm()), context.getBranchCriteria());
 		expressionForms.setHumanReadableClassifiableForm(humanReadableExpressions.get(0));
 		expressionForms.setHumanReadableNecessaryNormalForm(humanReadableExpressions.get(1));
 	}
@@ -250,18 +252,42 @@ public class ExpressionRepositoryService {
 
 	private String createHumanReadableExpression(String expression, ExpressionContext context) throws ServiceException {
 		if (expression != null) {
-			return createHumanReadableExpressions(Lists.newArrayList(expression), context).get(0);
+			return createHumanReadableExpressions(Lists.newArrayList(expression), context.getBranchCriteria()).get(0);
 		}
 		return null;
 	}
 
-	private List<String> createHumanReadableExpressions(List<String> expressions, ExpressionContext context) throws ServiceException {
+	private List<String> createHumanReadableExpressions(List<String> expressions, BranchCriteria branchCriteria) throws ServiceException {
 		final Set<String> allConceptIds = new HashSet<>();
 		for (String expression : expressions) {
 			final ComparableExpression comparableExpression = expressionParser.parseExpression(expression);
 			allConceptIds.addAll(comparableExpression.getAllConceptIds());
 		}
-		return transformationService.addHumanPTsToExpressionStrings(expressions, allConceptIds, context);
+		return transformationService.addHumanPTsToExpressionStrings(expressions, allConceptIds, branchCriteria, false);
 	}
 
+	public void addHumanReadableExpressions(Map<String, ReferenceSetMember> expressionMap, BranchCriteria branchCriteria) {
+		expressionMap = new LinkedHashMap<>(expressionMap);
+		Set<String> expressionConcepts = new HashSet<>();
+		List<String> expressionStrings = new ArrayList<>();
+		for (ReferenceSetMember member : expressionMap.values()) {
+			String expressionString = member.getAdditionalField(ReferenceSetMember.PostcoordinatedExpressionFields.EXPRESSION);
+			try {
+				ComparableExpression comparableExpression = expressionParser.parseExpression(expressionString);
+				expressionConcepts.addAll(comparableExpression.getAllConceptIds());
+				expressionStrings.add(expressionString);
+			} catch (ServiceException e) {
+				logger.info("Failed to parse persisted expression '{}'", expressionString);
+				expressionStrings.add("");
+			}
+		}
+		List<String> expressionStringsWithTerms = transformationService.addHumanPTsToExpressionStrings(expressionStrings, expressionConcepts, branchCriteria, true);
+		Iterator<String> withTermsIterator = expressionStringsWithTerms.iterator();
+		for (ReferenceSetMember member : expressionMap.values()) {
+			String term = withTermsIterator.next();
+			if (term != null && !term.isEmpty()) {
+				member.setAdditionalField(ReferenceSetMember.PostcoordinatedExpressionFields.TRANSIENT_EXPRESSION_TERM, term);
+			}
+		}
+	}
 }
