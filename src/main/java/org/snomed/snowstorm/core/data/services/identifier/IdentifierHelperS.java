@@ -2,7 +2,7 @@ package org.snomed.snowstorm.core.data.services.identifier;
 
 import org.springframework.util.StringUtils;
 
-public class IdentifierHelper extends org.ihtsdo.drools.helper.IdentifierHelper {
+public class IdentifierHelperS extends org.ihtsdo.drools.helper.IdentifierHelper {
 
 	public static boolean isExpressionId(String sctid) {
 		return sctid != null && SCTID_PATTERN.matcher(sctid).matches() && "6".equals(getPartitionIdPart(sctid));
@@ -17,7 +17,7 @@ public class IdentifierHelper extends org.ihtsdo.drools.helper.IdentifierHelper 
 	}
 
 	private static String getPartitionIdPart(String sctid) {
-		return !StringUtils.isEmpty(sctid) && sctid.length() > 4 ? sctid.substring(sctid.length() - 2, sctid.length() - 1) : null;
+		return StringUtils.hasText(sctid) && sctid.length() > 4 ? sctid.substring(sctid.length() - 2, sctid.length() - 1) : null;
 	}
 
 }
