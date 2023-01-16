@@ -121,7 +121,6 @@ public class SecurityAndUriConfig {
 				"/(.*)/relationships.*",
 				"/(.*)/descriptions.*",
 				"/(.*)/members.*",
-				"/(.*)/expressions.*",
 				"/(.*)/identifiers",
 				"/(.*)/identifiers/.*",
 				"/(.*)/classifications.*",
