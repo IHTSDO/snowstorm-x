@@ -4,6 +4,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.IdType;
+import org.hl7.fhir.r4.model.OperationOutcome;
 import org.snomed.snowstorm.core.data.domain.ConceptMini;
 import org.snomed.snowstorm.core.data.domain.ReferenceSetMember;
 import org.snomed.snowstorm.core.data.services.ConceptService;
@@ -15,6 +16,7 @@ import org.snomed.snowstorm.fhir.domain.*;
 import org.snomed.snowstorm.fhir.pojo.FHIRCodeSystemVersionParams;
 import org.snomed.snowstorm.fhir.pojo.FHIRSnomedConceptMapConfig;
 import org.snomed.snowstorm.fhir.repositories.FHIRConceptMapRepository;
+import org.snomed.snowstorm.fhir.repositories.FHIRMapElementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,7 +34,9 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static java.util.Comparator.*;
 import static org.elasticsearch.index.query.QueryBuilders.*;
+import static org.snomed.snowstorm.core.util.CollectionUtils.orEmpty;
 import static org.snomed.snowstorm.fhir.config.FHIRConstants.SNOMED_URI;
+import static org.snomed.snowstorm.fhir.services.FHIRHelper.exception;
 
 @Service
 public class FHIRConceptMapService {
@@ -43,6 +47,9 @@ public class FHIRConceptMapService {
 
 	@Autowired
 	private FHIRConceptMapRepository conceptMapRepository;
+
+	@Autowired
+	private FHIRMapElementRepository mapElementRepository;
 
 	@Autowired
 	private ElasticsearchRestTemplate elasticsearchTemplate;
@@ -75,6 +82,51 @@ public class FHIRConceptMapService {
 	public void init() {
 		snomedMaps = implicitMapConfig.getImplicitMaps();
 		snomedCorrelationToFhirEquivalenceMap = implicitMapConfig.getSnomedCorrelationToFhirEquivalenceMap();
+	}
+
+	public FHIRConceptMap createOrUpdate(FHIRConceptMap conceptMap) {
+		if (conceptMap.getUrl().contains("?fhir_cm")) {
+			throw exception("ConceptMap url must not contain 'fhir_cm', this is reserved for implicit concept maps.", OperationOutcome.IssueType.INVARIANT, 400);
+		}
+
+		if (conceptMap.getVersion() == null) {
+			conceptMap.setVersion("0");
+		}
+
+		// Delete existing maps with the same URL and version
+		conceptMapRepository.findAllByUrl(conceptMap.getUrl())
+				.stream().filter(map -> conceptMap.getVersion().equals(map.getVersion()))
+						.forEach(map -> {
+							// Delete map group elements
+							for (FHIRConceptMapGroup mapGroup : map.getGroup()) {
+								if (mapGroup.getElement() != null) {
+									mapElementRepository.deleteAll(mapGroup.getElement());
+								}
+							}
+							conceptMapRepository.delete(map);
+						});
+
+		// Save concept map and groups
+		FHIRConceptMap saved = conceptMapRepository.save(conceptMap);
+		for (FHIRConceptMapGroup mapGroup : conceptMap.getGroup()) {
+			// Save elements within each group
+			mapElementRepository.saveAll(mapGroup.getElement());
+		}
+		return saved;
+	}
+
+	public FHIRConceptMap findByIdWithGroups(String idPart) {
+		Optional<FHIRConceptMap> conceptMap = conceptMapRepository.findById(idPart);
+		if (conceptMap.isPresent()) {
+			FHIRConceptMap map = conceptMap.get();
+			for (FHIRConceptMapGroup group : orEmpty(map.getGroup())) {
+				List<FHIRMapElement> elements = mapElementRepository.findAllByGroupId(group.getGroupId());
+				group.setElement(elements);
+			}
+			return map;
+		}
+
+		return null;
 	}
 
 	public List<FHIRConceptMap> findAll() {
