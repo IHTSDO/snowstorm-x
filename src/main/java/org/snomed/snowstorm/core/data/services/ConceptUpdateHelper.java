@@ -85,9 +85,6 @@ public class ConceptUpdateHelper extends ComponentService {
 	private ReferenceSetMemberService memberService;
 
 	@Autowired
-	private ReferenceSetTypeRepository referenceSetTypeRepository;
-
-	@Autowired
 	private QueryConceptRepository queryConceptRepository;
 
 	@Autowired
@@ -660,10 +657,6 @@ public class ConceptUpdateHelper extends ComponentService {
 		doSaveBatchComponents(relationships, commit, "relationshipId", relationshipRepository);
 	}
 
-	private void doSaveBatchReferenceSetType(Collection<ReferenceSetType> referenceSetTypes, Commit commit) {
-		doSaveBatchComponents(referenceSetTypes, commit, ReferenceSetType.Fields.CONCEPT_ID, referenceSetTypeRepository);
-	}
-
 	private void doSaveBatchQueryConcept(Collection<QueryConcept> queryConcepts, Commit commit) {
 		doSaveBatchComponents(queryConcepts, commit, QueryConcept.Fields.CONCEPT_ID_FORM, queryConceptRepository);
 	}
@@ -799,8 +792,6 @@ public class ConceptUpdateHelper extends ComponentService {
 			doSaveBatchRelationships((Collection<Relationship>) components, commit);
 		} else if (type.equals(ReferenceSetMember.class)) {
 			memberService.doSaveBatchMembers((Collection<ReferenceSetMember>) components, commit);
-		} else if (type.equals(ReferenceSetType.class)) {
-			doSaveBatchReferenceSetType((Collection<ReferenceSetType>) components, commit);
 		} else if (type.equals(QueryConcept.class)) {
 			doSaveBatchQueryConcept((Collection<QueryConcept>) components, commit);
 		} else {
