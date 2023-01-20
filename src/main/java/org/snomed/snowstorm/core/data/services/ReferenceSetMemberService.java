@@ -22,7 +22,6 @@ import org.snomed.langauges.ecl.domain.filter.*;
 import org.snomed.snowstorm.config.Config;
 import org.snomed.snowstorm.core.data.domain.*;
 import org.snomed.snowstorm.core.data.repositories.ReferenceSetMemberRepository;
-import org.snomed.snowstorm.core.data.repositories.ReferenceSetTypeRepository;
 import org.snomed.snowstorm.core.data.services.identifier.IdentifierService;
 import org.snomed.snowstorm.core.data.services.pojo.AsyncRefsetMemberChangeBatch;
 import org.snomed.snowstorm.core.data.services.pojo.MemberSearchRequest;
@@ -67,7 +66,6 @@ import static java.lang.Long.parseLong;
 import static co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders.*;
 import static io.kaicode.elasticvc.helper.QueryHelper.*;
 import static org.snomed.snowstorm.core.data.domain.Concepts.inactivationAndAssociationRefsets;
-import static org.snomed.snowstorm.core.data.services.CodeSystemService.MAIN;
 import static org.snomed.snowstorm.core.util.CollectionUtils.orEmpty;
 import static org.snomed.snowstorm.core.util.SearchAfterQueryHelper.updateQueryWithSearchAfter;
 import static org.springframework.data.elasticsearch.client.elc.Queries.wildcardQuery;
@@ -97,16 +95,10 @@ public class ReferenceSetMemberService extends ComponentService {
 	private BranchService branchService;
 
 	@Autowired
-	private SBranchService sBranchService;
-
-	@Autowired
 	private BranchMetadataHelper branchMetadataHelper;
 
 	@Autowired
 	private ReferenceSetMemberRepository memberRepository;
-
-	@Autowired
-	private ReferenceSetTypeRepository typeRepository;
 
 	@Autowired
 	private ReferenceSetTypesConfigurationService referenceSetTypesConfigurationService;
@@ -130,8 +122,9 @@ public class ReferenceSetMemberService extends ComponentService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	public void init() {
-		Set<ReferenceSetType> configuredTypes = referenceSetTypesConfigurationService.getConfiguredTypes();
-		setupTypes(configuredTypes);
+		List<ReferenceSetTypeExportConfiguration> configuredTypes = referenceSetTypesConfigurationService.getConfiguredTypes();
+		String message = String.format("Reference set types configured for export: %s", configuredTypes.toString());
+		logger.info(message);
 	}
 
 	public Page<ReferenceSetMember> findMembers(String branch,
@@ -607,48 +600,6 @@ public class ReferenceSetMemberService extends ComponentService {
 		}
 	}
 
-	private void setupTypes(Set<ReferenceSetType> referenceSetTypes) {
-		String path = refsetsBranchPath;
-		if (!branchService.exists(MAIN)) {
-			sBranchService.create(MAIN);
-		}
-		if (branchService.findLatest(path).isLocked()) {
-			logger.warn("{} branch is locked. Unable to verify reference set type configuration.", path);
-			return;
-		}
-		logger.info("Reference set types are configured against branch: '{}'.", path);
-		List<ReferenceSetType> existingTypes = findConfiguredReferenceSetTypes(path);
-		Set<ReferenceSetType> typesToRemove = new HashSet<>(existingTypes);
-		typesToRemove.removeAll(referenceSetTypes);
-		if (!typesToRemove.isEmpty()) {
-			String message = String.format("Removing reference set types: %s", typesToRemove);
-			logger.info(message);
-			try (Commit commit = branchService.openCommit(path, branchMetadataHelper.getBranchLockMetadata(message))) {
-				typesToRemove.forEach(ReferenceSetType::markDeleted);
-				doSaveBatchComponents(typesToRemove, commit, ReferenceSetType.FIELD_ID, typeRepository);
-				commit.markSuccessful();
-			}
-		}
-
-		Set<ReferenceSetType> typesToAdd = new HashSet<>(referenceSetTypes);
-		typesToAdd.removeAll(existingTypes);
-		if (!typesToAdd.isEmpty()) {
-			String message = String.format("Setting up reference set types: %s", typesToAdd.toString());
-			logger.info(message);
-			try (Commit commit = branchService.openCommit(path, branchMetadataHelper.getBranchLockMetadata(message))) {
-				doSaveBatchComponents(typesToAdd, commit, ReferenceSetType.FIELD_ID, typeRepository);
-				commit.markSuccessful();
-			}
-		}
-	}
-
-	public List<ReferenceSetType> findConfiguredReferenceSetTypes(String path) {
-		NativeQuery query = new NativeQueryBuilder()
-				.withQuery(versionControlHelper.getBranchCriteria(path).getEntityBranchCriteria(ReferenceSetType.class))
-				.withPageable(LARGE_PAGE).build();
-		return elasticsearchOperations.search(query, ReferenceSetType.class).stream().map(SearchHit::getContent).collect(Collectors.toList());
-	}
-
 	public ReferenceSetMember updateMember(String branch, ReferenceSetMember member) {
 
 		ReferenceSetMember existingMember = findMember(branch, member.getMemberId());
@@ -736,7 +687,7 @@ public class ReferenceSetMemberService extends ComponentService {
 		return refsetToTypeMap;
 	}
 
-	public Map<String, ReferenceSetType> getConfiguredTypesMap() {
-		return referenceSetTypesConfigurationService.getConfiguredTypes().stream().collect(Collectors.toMap(ReferenceSetType::getConceptId, Function.identity()));
+	public Map<String, ReferenceSetTypeExportConfiguration> getConfiguredTypesMap() {
+		return referenceSetTypesConfigurationService.getConfiguredTypes().stream().collect(Collectors.toMap(ReferenceSetTypeExportConfiguration::getConceptId, Function.identity()));
 	}
 }
