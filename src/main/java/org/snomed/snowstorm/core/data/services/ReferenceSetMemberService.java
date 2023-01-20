@@ -23,7 +23,6 @@ import org.snomed.langauges.ecl.domain.filter.*;
 import org.snomed.snowstorm.config.Config;
 import org.snomed.snowstorm.core.data.domain.*;
 import org.snomed.snowstorm.core.data.repositories.ReferenceSetMemberRepository;
-import org.snomed.snowstorm.core.data.repositories.ReferenceSetTypeRepository;
 import org.snomed.snowstorm.core.data.services.identifier.IdentifierService;
 import org.snomed.snowstorm.core.data.services.pojo.AsyncRefsetMemberChangeBatch;
 import org.snomed.snowstorm.core.data.services.pojo.MemberSearchRequest;
@@ -66,7 +65,6 @@ import static java.lang.Long.parseLong;
 import static org.elasticsearch.index.query.QueryBuilders.*;
 import static org.snomed.snowstorm.config.Config.AGGREGATION_SEARCH_SIZE;
 import static org.snomed.snowstorm.core.data.domain.Concepts.inactivationAndAssociationRefsets;
-import static org.snomed.snowstorm.core.data.services.CodeSystemService.MAIN;
 import static org.snomed.snowstorm.core.util.CollectionUtils.orEmpty;
 
 @Service
@@ -94,16 +92,10 @@ public class ReferenceSetMemberService extends ComponentService {
 	private BranchService branchService;
 
 	@Autowired
-	private SBranchService sBranchService;
-
-	@Autowired
 	private BranchMetadataHelper branchMetadataHelper;
 
 	@Autowired
 	private ReferenceSetMemberRepository memberRepository;
-
-	@Autowired
-	private ReferenceSetTypeRepository typeRepository;
 
 	@Autowired
 	private ReferenceSetTypesConfigurationService referenceSetTypesConfigurationService;
@@ -124,8 +116,9 @@ public class ReferenceSetMemberService extends ComponentService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	public void init() {
-		Set<ReferenceSetType> configuredTypes = referenceSetTypesConfigurationService.getConfiguredTypes();
-		setupTypes(configuredTypes);
+		List<ReferenceSetTypeExportConfiguration> configuredTypes = referenceSetTypesConfigurationService.getConfiguredTypes();
+		String message = String.format("Reference set types configured for export: %s", configuredTypes.toString());
+		logger.info(message);
 	}
 
 	public Page<ReferenceSetMember> findMembers(String branch,
@@ -596,44 +589,6 @@ public class ReferenceSetMemberService extends ComponentService {
 			}
 		}
 	}
-
-	private void setupTypes(Set<ReferenceSetType> referenceSetTypes) {
-		String path = refsetsBranchPath;
-		if (!branchService.exists(MAIN)) {
-			sBranchService.create(MAIN);
-		}
-		logger.info("Reference set types are configured against branch: '{}'.", path);
-		List<ReferenceSetType> existingTypes = findConfiguredReferenceSetTypes(path);
-		Set<ReferenceSetType> typesToRemove = new HashSet<>(existingTypes);
-		typesToRemove.removeAll(referenceSetTypes);
-		if (!typesToRemove.isEmpty()) {
-			String message = String.format("Removing reference set types: %s", typesToRemove.toString());
-			logger.info(message);
-			try (Commit commit = branchService.openCommit(path, branchMetadataHelper.getBranchLockMetadata(message))) {
-				typesToRemove.forEach(ReferenceSetType::markDeleted);
-				doSaveBatchComponents(typesToRemove, commit, ReferenceSetType.FIELD_ID, typeRepository);
-				commit.markSuccessful();
-			}
-		}
-
-		Set<ReferenceSetType> typesToAdd = new HashSet<>(referenceSetTypes);
-		typesToAdd.removeAll(existingTypes);
-		if (!typesToAdd.isEmpty()) {
-			String message = String.format("Setting up reference set types: %s", typesToAdd.toString());
-			logger.info(message);
-			try (Commit commit = branchService.openCommit(path, branchMetadataHelper.getBranchLockMetadata(message))) {
-				doSaveBatchComponents(typesToAdd, commit, ReferenceSetType.FIELD_ID, typeRepository);
-				commit.markSuccessful();
-			}
-		}
-	}
-
-	public List<ReferenceSetType> findConfiguredReferenceSetTypes(String path) {
-		QueryBuilder branchCriteria = versionControlHelper.getBranchCriteria(path).getEntityBranchCriteria(ReferenceSetType.class);
-		NativeSearchQuery query = new NativeSearchQueryBuilder().withQuery(branchCriteria).withPageable(LARGE_PAGE).build();
-		return elasticsearchTemplate.search(query, ReferenceSetType.class).stream().map(SearchHit::getContent).collect(Collectors.toList());
-	}
-	//TODO If this could be called during a rebase, include the source branch and pass existingRebaseSourceMember into copyReleaseDetails
 
 	public ReferenceSetMember updateMember(String branch, ReferenceSetMember member) {
 

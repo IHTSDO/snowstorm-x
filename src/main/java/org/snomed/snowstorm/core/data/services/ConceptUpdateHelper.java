@@ -15,7 +15,10 @@ import org.snomed.otf.owltoolkit.conversion.ConversionException;
 import org.snomed.snowstorm.config.Config;
 import org.snomed.snowstorm.config.SearchLanguagesConfiguration;
 import org.snomed.snowstorm.core.data.domain.*;
-import org.snomed.snowstorm.core.data.repositories.*;
+import org.snomed.snowstorm.core.data.repositories.ConceptRepository;
+import org.snomed.snowstorm.core.data.repositories.DescriptionRepository;
+import org.snomed.snowstorm.core.data.repositories.QueryConceptRepository;
+import org.snomed.snowstorm.core.data.repositories.RelationshipRepository;
 import org.snomed.snowstorm.core.data.services.identifier.IdentifierReservedBlock;
 import org.snomed.snowstorm.core.data.services.identifier.IdentifierService;
 import org.snomed.snowstorm.core.data.services.pojo.MemberSearchRequest;
@@ -58,9 +61,6 @@ public class ConceptUpdateHelper extends ComponentService {
 	@Autowired
 	@Lazy
 	private ReferenceSetMemberService memberService;
-
-	@Autowired
-	private ReferenceSetTypeRepository referenceSetTypeRepository;
 
 	@Autowired
 	private QueryConceptRepository queryConceptRepository;
@@ -600,10 +600,6 @@ public class ConceptUpdateHelper extends ComponentService {
 		doSaveBatchComponents(relationships, commit, "relationshipId", relationshipRepository);
 	}
 
-	private void doSaveBatchReferenceSetType(Collection<ReferenceSetType> referenceSetTypes, Commit commit) {
-		doSaveBatchComponents(referenceSetTypes, commit, ReferenceSetType.Fields.CONCEPT_ID, referenceSetTypeRepository);
-	}
-
 	private void doSaveBatchQueryConcept(Collection<QueryConcept> queryConcepts, Commit commit) {
 		doSaveBatchComponents(queryConcepts, commit, QueryConcept.Fields.CONCEPT_ID_FORM, queryConceptRepository);
 	}
@@ -722,8 +718,6 @@ public class ConceptUpdateHelper extends ComponentService {
 			doSaveBatchRelationships((Collection<Relationship>) components, commit);
 		} else if (type.equals(ReferenceSetMember.class)) {
 			memberService.doSaveBatchMembers((Collection<ReferenceSetMember>) components, commit);
-		} else if (type.equals(ReferenceSetType.class)) {
-			doSaveBatchReferenceSetType((Collection<ReferenceSetType>) components, commit);
 		} else if (type.equals(QueryConcept.class)) {
 			doSaveBatchQueryConcept((Collection<QueryConcept>) components, commit);
 		} else {

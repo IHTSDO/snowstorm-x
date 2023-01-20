@@ -5,30 +5,22 @@ import io.kaicode.elasticvc.api.BranchCriteria;
 import io.kaicode.elasticvc.api.BranchService;
 import io.kaicode.elasticvc.api.VersionControlHelper;
 import io.kaicode.elasticvc.domain.Branch;
-
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.drools.util.StringUtils;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.sort.SortBuilders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.snowstorm.core.data.domain.*;
 import org.snomed.snowstorm.core.data.domain.jobs.ExportConfiguration;
 import org.snomed.snowstorm.core.data.repositories.ExportConfigurationRepository;
-import org.snomed.snowstorm.core.data.services.BranchMetadataHelper;
-import org.snomed.snowstorm.core.data.services.BranchMetadataKeys;
-import org.snomed.snowstorm.core.data.services.CodeSystemService;
-import org.snomed.snowstorm.core.data.services.ModuleDependencyService;
-import org.snomed.snowstorm.core.data.services.NotFoundException;
-import org.snomed.snowstorm.core.data.services.QueryService;
+import org.snomed.snowstorm.core.data.services.*;
 import org.snomed.snowstorm.core.rf2.RF2Type;
 import org.snomed.snowstorm.core.util.DateUtil;
 import org.snomed.snowstorm.core.util.TimerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHitsIterator;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
@@ -72,6 +64,9 @@ public class ExportService {
 
 	@Autowired
 	private CodeSystemService codeSystemService;
+
+	@Autowired
+	private ReferenceSetTypesConfigurationService referenceSetTypesConfigurationService;
 
 	private final Set<String> refsetTypesRequiredForClassification = Sets.newHashSet(Concepts.REFSET_MRCM_ATTRIBUTE_DOMAIN, Concepts.OWL_EXPRESSION_TYPE_REFERENCE_SET);
 
@@ -231,14 +226,14 @@ public class ExportService {
 				}
 
 				// Write Reference Sets
-				List<ReferenceSetType> referenceSetTypes = getReferenceSetTypes(allContentBranchCriteria.getEntityBranchCriteria(ReferenceSetType.class)).stream()
+				List<ReferenceSetTypeExportConfiguration> referenceSetTypes = referenceSetTypesConfigurationService.getConfiguredTypes().stream()
 						.filter(type -> !forClassification || refsetTypesRequiredForClassification.contains(type.getConceptId()))
 						.collect(Collectors.toList());
 
 				logger.info("{} Reference Set Types found for this export: {}", referenceSetTypes.size(), referenceSetTypes);
 
 				BoolQueryBuilder memberBranchCriteria = selectionBranchCriteria.getEntityBranchCriteria(ReferenceSetMember.class);
-				for (ReferenceSetType referenceSetType : referenceSetTypes) {
+				for (ReferenceSetTypeExportConfiguration referenceSetType : referenceSetTypes) {
 					List<Long> refsetsOfThisType = new ArrayList<>(queryService.findDescendantIdsAsUnion(allContentBranchCriteria, true, Collections.singleton(Long.parseLong(referenceSetType.getConceptId()))));
 					refsetsOfThisType.add(Long.parseLong(referenceSetType.getConceptId()));
 					for (Long refsetToExport : refsetsOfThisType) {
@@ -406,16 +401,6 @@ public class ExportService {
 			return (ExportWriter<T>) new IdentifierExportWriter(getBufferedWriter(outputStream));
 		}
 		throw new UnsupportedOperationException("Not able to export component of type " + componentClass.getCanonicalName());
-	}
-
-	private List<ReferenceSetType> getReferenceSetTypes(QueryBuilder branchCriteria) {
-		BoolQueryBuilder contentQuery = getContentQuery(RF2Type.SNAPSHOT, null, null, branchCriteria);
-		return elasticsearchTemplate.search(new NativeSearchQueryBuilder()
-				.withQuery(contentQuery)
-				.withSort(SortBuilders.fieldSort(ReferenceSetType.Fields.NAME))
-				.withPageable(LARGE_PAGE)
-				.build(), ReferenceSetType.class)
-				.stream().map(SearchHit::getContent).collect(Collectors.toList());
 	}
 
 	private NativeSearchQuery getNativeSearchQuery(BoolQueryBuilder contentQuery) {
