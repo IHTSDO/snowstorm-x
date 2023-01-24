@@ -42,7 +42,7 @@ public class ExpressionMRCMValidationService {
 	public void attributeDomainValidation(ComparableExpression expression, ExpressionContext context) throws ServiceException {
 		List<Attribute> allAttributes = new ArrayList<>();
 		allAttributes.addAll(orEmpty(expression.getAttributes()));
-		allAttributes.addAll(orEmpty(expression.getAttributeGroups()).stream().flatMap(group -> group.getAttributes().stream()).collect(Collectors.toList()));
+		allAttributes.addAll(orEmpty(expression.getAttributeGroups()).stream().flatMap(group -> group.getAttributes().stream()).toList());
 		if (!allAttributes.isEmpty()) {
 			// Fetch attribute domains
 			Set<Long> focusConceptIds = expression.getFocusConcepts().stream().map(Long::parseLong).collect(Collectors.toSet());
@@ -52,12 +52,12 @@ public class ExpressionMRCMValidationService {
 				if (!validAttributesForDomain.contains(usedAttribute.getAttributeId())) {
 					// Attribute used in wrong domain
 					// Report correct domains in error message
-					Set<String> validDomains = context.getBranchMRCM().getAttributeDomains().stream()
+					Set<String> validDomains = context.getBranchMRCM().attributeDomains().stream()
 							.filter(attributeDomain -> attributeDomain.getReferencedComponentId().equals(usedAttribute.getAttributeId()))
 							.map(AttributeDomain::getDomainId)
 							.collect(Collectors.toSet());
 					List<String> validDomainsForUsedAttribute = conceptService.findConceptMinis(context.getBranchCriteria(), validDomains, DEFAULT_LANGUAGE_DIALECTS)
-							.getResultsMap().values().stream().map(ConceptMini::getIdAndFsnTerm).collect(Collectors.toList());
+							.getResultsMap().values().stream().map(ConceptMini::getIdAndFsnTerm).toList();
 					throw new IllegalArgumentException(format("Attribute Type %s can not be used with the given focus concepts %s because the attribute can only be used " +
 							"in the following MRCM domains: %s.", usedAttribute.getAttributeId(), focusConceptIds, validDomainsForUsedAttribute));
 				}
@@ -66,7 +66,7 @@ public class ExpressionMRCMValidationService {
 
 		// Also validate nested expressions
 		List<ComparableExpression> nestedExpressions = allAttributes.stream().filter(attribute -> attribute.getAttributeValue().isNested())
-				.map(attribute -> (ComparableExpression) attribute.getAttributeValue().getNestedExpression()).collect(Collectors.toList());
+				.map(attribute -> (ComparableExpression) attribute.getAttributeValue().getNestedExpression()).toList();
 		for (ComparableExpression nestedExpression : nestedExpressions) {
 			attributeDomainValidation(nestedExpression, context);
 		}
@@ -133,7 +133,7 @@ public class ExpressionMRCMValidationService {
 
 				StringBuilder buffer = new StringBuilder();
 				for (AttributeRange mandatoryAttributeRange : mandatoryAttributeRanges) {
-					if (buffer.length() > 0) {
+					if (!buffer.isEmpty()) {
 						buffer.append(" OR ");
 					}
 					buffer.append("(").append(mandatoryAttributeRange.getRangeConstraint()).append(")");

@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import io.kaicode.elasticvc.api.BranchService;
 import io.kaicode.elasticvc.domain.Branch;
 import io.kaicode.elasticvc.domain.Commit;
+import io.kaicode.elasticvc.api.VersionControlHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +43,9 @@ class QueryServiceTest extends AbstractTest {
 
 	@Autowired
 	private ReferenceSetMemberService referenceSetMemberService;
+
+	@Autowired
+	private VersionControlHelper versionControlHelper;
 
 	private static final PageRequest PAGE_REQUEST = PageRequest.of(0, 50);
 	public static final String PATH = "MAIN";
@@ -487,4 +491,39 @@ class QueryServiceTest extends AbstractTest {
 		}
 		referenceSetMemberService.createMembers(branchPath, members);
 	}
+
+	@Test
+	void testMatchModel() throws ServiceException {
+		// Setup concept with one group
+		conceptService.create(new Concept("1" + PENTALOGY_OF_FALLOT)
+				.addRelationship(new Relationship(ISA, DISORDER))
+				.addRelationship(new Relationship(FINDING_SITE, PULMONARY_VALVE_STRUCTURE).setGroupId(1))
+				.addRelationship(new Relationship(ASSOCIATED_MORPHOLOGY, STENOSIS).setGroupId(1))
+				, MAIN);
+
+		// Setup concept with two groups
+		Concept savedConcept = conceptService.create(new Concept(PENTALOGY_OF_FALLOT)
+				.addRelationship(new Relationship(ISA, DISORDER))
+				.addRelationship(new Relationship(FINDING_SITE, PULMONARY_VALVE_STRUCTURE).setGroupId(1))
+				.addRelationship(new Relationship(ASSOCIATED_MORPHOLOGY, STENOSIS).setGroupId(1))
+				.addRelationship(new Relationship(FINDING_SITE, RIGHT_VENTRICULAR_STRUCTURE).setGroupId(2))
+				.addRelationship(new Relationship(ASSOCIATED_MORPHOLOGY, HYPERTROPHY).setGroupId(2))
+				, MAIN);
+
+		// Setup concept with three groups
+		conceptService.create(new Concept("2" + PENTALOGY_OF_FALLOT)
+				.addRelationship(new Relationship(ISA, DISORDER))
+				.addRelationship(new Relationship(FINDING_SITE, PULMONARY_VALVE_STRUCTURE).setGroupId(1))
+				.addRelationship(new Relationship(ASSOCIATED_MORPHOLOGY, STENOSIS).setGroupId(1))
+				.addRelationship(new Relationship(FINDING_SITE, RIGHT_VENTRICULAR_STRUCTURE).setGroupId(2))
+				.addRelationship(new Relationship(ASSOCIATED_MORPHOLOGY, STENOSIS).setGroupId(2))
+				.addRelationship(new Relationship(FINDING_SITE, RIGHT_VENTRICULAR_STRUCTURE).setGroupId(3))
+				.addRelationship(new Relationship(ASSOCIATED_MORPHOLOGY, HYPERTROPHY).setGroupId(3))
+				, MAIN);
+
+		// Attempt to fetch the concept with two groups by matching the model against the semantic index
+		String conceptId = service.findConceptWithMatchingInferredRelationships(savedConcept.getRelationships(), versionControlHelper.getBranchCriteria(MAIN));
+		assertEquals(savedConcept.getId(), conceptId);
+	}
+
 }
