@@ -168,7 +168,7 @@ public class ConceptService extends ComponentService {
 
 	public Set<String> getConceptIdsNotActiveOrNotExist(Collection<String> conceptIds, BranchCriteria branchCriteria) {
 		NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
-				.withQuery(boolQuery()
+				.withQuery(branchCriteria.getEntityBranchCriteria(Concept.class)
 						.must(termsQuery(Concept.Fields.CONCEPT_ID, conceptIds))
 						.must(termQuery(SnomedComponent.Fields.ACTIVE, true)))
 				.withFields(Concept.Fields.CONCEPT_ID)
