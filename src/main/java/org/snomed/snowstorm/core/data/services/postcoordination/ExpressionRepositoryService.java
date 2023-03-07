@@ -11,10 +11,7 @@ import org.snomed.languages.scg.domain.model.Attribute;
 import org.snomed.languages.scg.domain.model.AttributeGroup;
 import org.snomed.languages.scg.domain.model.DefinitionStatus;
 import org.snomed.snowstorm.config.Config;
-import org.snomed.snowstorm.core.data.domain.Concept;
-import org.snomed.snowstorm.core.data.domain.Concepts;
-import org.snomed.snowstorm.core.data.domain.ReferenceSetMember;
-import org.snomed.snowstorm.core.data.domain.Relationship;
+import org.snomed.snowstorm.core.data.domain.*;
 import org.snomed.snowstorm.core.data.services.ConceptService;
 import org.snomed.snowstorm.core.data.services.QueryService;
 import org.snomed.snowstorm.core.data.services.ReferenceSetMemberService;
@@ -153,6 +150,17 @@ public class ExpressionRepositoryService {
 							.setAdditionalField(EXPRESSION_FIELD, postCoordinatedExpression.getClassifiableForm().replace(" ", ""));
 					classifiableFormMember.markChanged();
 					membersToSave.add(classifiableFormMember);
+
+					for (Concept concept : conceptsToSave) {
+						// Clear modules to pick up branch module
+						concept.setModuleId(null);
+						for (Description description : orEmpty(concept.getDescriptions())) {
+							description.setModuleId(null);
+						}
+						for (Relationship relationship : orEmpty(concept.getRelationships())) {
+							relationship.setModuleId(null);
+						}
+					}
 
 					if (conceptsToSave.size() >= 100) {
 						memberService.doSaveBatchMembers(membersToSave, commit);
