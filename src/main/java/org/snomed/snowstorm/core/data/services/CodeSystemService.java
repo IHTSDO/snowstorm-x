@@ -552,10 +552,10 @@ public class CodeSystemService {
 			// Populate moduleId
 			String uriModuleId = Concepts.CORE_MODULE;
 			Optional<CodeSystemDefaultConfiguration> defaultConfiguration = codeSystemDefaultConfigurationService.getConfigurations().stream()
-					.filter(config -> config.getShortName().equals(codeSystem.getShortName()))
+					.filter(config -> config.shortName().equals(codeSystem.getShortName()))
 					.findFirst();
 			if (defaultConfiguration.isPresent()) {
-				uriModuleId = defaultConfiguration.get().getModule();
+				uriModuleId = defaultConfiguration.get().module();
 			}
 			codeSystem.setUriModuleId(uriModuleId);
 		}
