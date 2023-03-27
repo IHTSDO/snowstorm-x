@@ -434,7 +434,7 @@ class CodeSystemControllerTest extends AbstractTest {
         referenceSetMemberService.createMember(branchPath, mdrs);
     }
 
-    private void givenCodeSystemExists(String shortName, String branchPath) {
+    private void givenCodeSystemExists(String shortName, String branchPath) throws ServiceException {
         codeSystemService.createCodeSystem(new CodeSystem(shortName, branchPath));
     }
 
@@ -444,7 +444,7 @@ class CodeSystemControllerTest extends AbstractTest {
         codeSystemService.updateCodeSystemVersionPackage(codeSystemVersion, "SnomedCT_InternationalRF2_PRODUCTION_" + effectiveDate + "T120000Z.zip");
     }
 
-    private CodeSystem givenCodeSystemExists(String shortName, String branchPath, Integer dependantVersion) {
+    private CodeSystem givenCodeSystemExists(String shortName, String branchPath, Integer dependantVersion) throws ServiceException {
         CodeSystem newCodeSystem = new CodeSystem(shortName, branchPath);
         newCodeSystem.setDependantVersionEffectiveTime(dependantVersion);
         codeSystemService.createCodeSystem(newCodeSystem);
@@ -605,7 +605,7 @@ class CodeSystemControllerTest extends AbstractTest {
     }
 
     @Test
-    void addCodeSystemDependencies_ShouldReturnError_WhenNoDependentVersion() {
+    void addCodeSystemDependencies_ShouldReturnError_WhenNoDependentVersion() throws ServiceException {
         //given
         givenCodeSystemExists("SNOMEDCT-TEST", "MAIN/SNOMEDCT-TEST", 20210131);
         String requestUrl = addAdditionalCodeSystemDependency("SNOMEDCT-TEST", "123455", "SNOMEDCT-DM");
@@ -714,7 +714,7 @@ class CodeSystemControllerTest extends AbstractTest {
     }
 
     @Test
-    void getAllDependencies_ShouldReturnEmptyList_WhenNoDependencies() {
+    void getAllDependencies_ShouldReturnEmptyList_WhenNoDependencies() throws ServiceException {
         //given
         givenCodeSystemExists("SNOMEDCT-TEST", "MAIN/SNOMEDCT-TEST", 20200731);
 

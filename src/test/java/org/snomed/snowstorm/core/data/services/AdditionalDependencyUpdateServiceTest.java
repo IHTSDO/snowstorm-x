@@ -48,7 +48,7 @@ class AdditionalDependencyUpdateServiceTest extends AbstractTest  {
 
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws ServiceException {
         // Create MAIN
         main = new CodeSystem("SNOMEDCT", MAIN);
         codeSystemService.createCodeSystem(main);

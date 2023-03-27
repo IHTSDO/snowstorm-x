@@ -496,7 +496,7 @@ public class QueryService implements ApplicationContextAware {
 		}
 		SortOptions sortOptions = SortOptionsBuilders.script()
 				.script(new Script.Builder()
-						.inline(new InlineScript.Builder().source("doc['attrMap'].value.length()").build())
+						.source("doc['attrMap'].value.length()")
 						.build())
 				.type(ScriptSortType.Number)   // sort as number
 				.order(SortOrder.Asc)

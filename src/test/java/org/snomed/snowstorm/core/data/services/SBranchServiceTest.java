@@ -75,7 +75,7 @@ class SBranchServiceTest extends AbstractTest {
 	}
 
 	@Test
-	public void rollbackCommitWithCodeSystemVersion() throws IOException, ReleaseImportException {
+	public void rollbackCommitWithCodeSystemVersion() throws IOException, ReleaseImportException, ServiceException {
 		// Create international code system
 		codeSystemService.createCodeSystem(new CodeSystem("SNOMEDCT", "MAIN", "International Edition", ""));
 
@@ -127,7 +127,7 @@ class SBranchServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void getModules_ShouldReturnExpected_WhenGivenExtension() {
+	void getModules_ShouldReturnExpected_WhenGivenExtension() throws ServiceException {
 		// given
 		codeSystemService.createCodeSystem(new CodeSystem("SNOMEDCT-XX", "MAIN/SNOMEDCT-XX"));
 		branchService.updateMetadata(

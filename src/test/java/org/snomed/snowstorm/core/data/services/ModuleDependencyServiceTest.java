@@ -653,7 +653,7 @@ class ModuleDependencyServiceTest extends AbstractTest {
 
 
 	@Test
-	void getCodeSystemBranchByModuleId() {
+	void getCodeSystemBranchByModuleId() throws ServiceException {
 		// Create International CodeSystem
 		CodeSystem main = codeSystemService.createCodeSystem(new CodeSystem("SNOMEDCT", "MAIN"));
 		// Add MDRS
@@ -717,7 +717,7 @@ class ModuleDependencyServiceTest extends AbstractTest {
 	}
 
 	@Test
-	void getCodeSystemBranchByModuleId_coreModuleMdrsOnExtensionPrefersMain() {
+	void getCodeSystemBranchByModuleId_coreModuleMdrsOnExtensionPrefersMain() throws ServiceException {
 		// Create International CodeSystem with CORE_MODULE MDRS on MAIN
 		CodeSystem main = codeSystemService.createCodeSystem(new CodeSystem("SNOMEDCT", "MAIN"));
 		ReferenceSetMember coreMdrsMain = new ReferenceSetMember();

@@ -111,15 +111,15 @@ public class ModuleDependencyService extends ComponentService {
 	public void createMDRSEntriesForAdditionalDependency(String holdingModule, CodeSystem currentCodeSystem, CodeSystem additionalCodeSystem, Integer currentDependantVersion) throws ServiceException {
 		// Need to fetch the default module id
 		additionalCodeSystem = codeSystemService.findClosestCodeSystemUsingAnyBranch(additionalCodeSystem.getBranchPath(), true);
-		if (additionalCodeSystem.getDefaultModuleId() == null) {
-			throw new ServiceException(String.format("Dependency code system %s has no default module configured.", additionalCodeSystem.getShortName()));
+		if (additionalCodeSystem.getUriModuleId() == null) {
+			throw new ServiceException(String.format("Dependency code system %s has no identifying/uri module configured.", additionalCodeSystem.getShortName()));
 		}
 		CodeSystemVersion codeSystemVersion = codeSystemVersionService.findVersionByCodeSystemAndDependentVersion(additionalCodeSystem.getShortName(), currentDependantVersion, true, true);
 
 		ReferenceSetMember mdrsEntry = new ReferenceSetMember();
 		mdrsEntry.setModuleId(holdingModule);
 		mdrsEntry.setRefsetId(Concepts.MODULE_DEPENDENCY_REFERENCE_SET);
-		mdrsEntry.setReferencedComponentId(additionalCodeSystem.getDefaultModuleId());
+		mdrsEntry.setReferencedComponentId(additionalCodeSystem.getUriModuleId());
 		mdrsEntry.setActive(true);
 		mdrsEntry.setAdditionalField(ReferenceSetMember.MDRSFields.SOURCE_EFFECTIVE_TIME, null);
 
