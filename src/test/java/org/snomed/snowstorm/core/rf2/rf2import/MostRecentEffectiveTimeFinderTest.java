@@ -48,7 +48,7 @@ class MostRecentEffectiveTimeFinderTest extends AbstractTest {
     private CodeSystem codeSystem;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws ServiceException {
         codeSystem = new CodeSystem("SNOMEDCT", "MAIN");
         codeSystemService.createCodeSystem(codeSystem);
     }

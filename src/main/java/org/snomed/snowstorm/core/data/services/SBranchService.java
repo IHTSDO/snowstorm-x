@@ -22,7 +22,6 @@ import org.springframework.data.domain.*;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
@@ -34,12 +33,12 @@ import java.util.stream.Collectors;
 
 import static co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders.bool;
 import static co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders.range;
+import static io.kaicode.elasticvc.helper.QueryHelper.termQuery;
+import static io.kaicode.elasticvc.helper.QueryHelper.termsQuery;
 import static java.lang.String.format;
 import static org.snomed.snowstorm.core.data.services.BranchMetadataHelper.AUTHOR_FLAGS_METADATA_KEY;
 import static org.snomed.snowstorm.core.data.services.BranchMetadataHelper.INTERNAL_METADATA_KEY;
 import static org.snomed.snowstorm.core.data.services.IntegrityService.INTEGRITY_ISSUE_METADATA_KEY;
-import static io.kaicode.elasticvc.helper.QueryHelper.termsQuery;
-import static io.kaicode.elasticvc.helper.QueryHelper.termQuery;
 
 @Service
 // Snowstorm branch service has some methods in addition to the ElasticVC library service.
@@ -280,5 +279,11 @@ public class SBranchService {
 		} catch (BranchNotFoundException | IllegalArgumentException e) {
 			return null;
 		}
+	}
+
+	public void setMetadataItem(String branchPath, String key, String value) {
+		Metadata metadata = branchService.findBranchOrThrow(branchPath).getMetadata();
+		metadata.putString(key, value);
+		branchService.updateMetadata(branchPath, metadata);
 	}
 }

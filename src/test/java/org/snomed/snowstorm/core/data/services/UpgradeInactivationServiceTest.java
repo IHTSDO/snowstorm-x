@@ -52,7 +52,7 @@ class UpgradeInactivationServiceTest extends AbstractTest {
 	private final CodeSystem SNOMEDCT = new CodeSystem("SNOMEDCT", "MAIN");
 
 	@BeforeEach
-	void setUp() {
+	void setUp() throws ServiceException {
 		codeSystemService.createCodeSystem(SNOMEDCT);
 		testUtil = new ServiceTestUtil(conceptService);
 	}
