@@ -5,6 +5,7 @@ import io.kaicode.elasticvc.api.BranchService;
 import io.kaicode.elasticvc.api.PathUtil;
 import io.kaicode.elasticvc.api.VersionControlHelper;
 import io.kaicode.elasticvc.domain.Branch;
+import io.kaicode.elasticvc.domain.Commit;
 import io.kaicode.elasticvc.domain.Metadata;
 import org.apache.activemq.command.ActiveMQTopic;
 import org.elasticsearch.common.Strings;
@@ -20,6 +21,7 @@ import org.snomed.snowstorm.core.data.repositories.CodeSystemRepository;
 import org.snomed.snowstorm.core.data.repositories.CodeSystemVersionRepository;
 import org.snomed.snowstorm.core.data.services.pojo.CodeSystemDefaultConfiguration;
 import org.snomed.snowstorm.core.data.services.pojo.PageWithBucketAggregationsFactory;
+import org.snomed.snowstorm.core.data.services.postcoordination.ExpressionRepositoryService;
 import org.snomed.snowstorm.core.pojo.LanguageDialect;
 import org.snomed.snowstorm.core.util.DateUtil;
 import org.snomed.snowstorm.core.util.LangUtil;
@@ -50,6 +52,7 @@ import static io.kaicode.elasticvc.api.ComponentService.LARGE_PAGE;
 import static java.lang.String.format;
 import static org.elasticsearch.index.query.QueryBuilders.*;
 import static org.snomed.snowstorm.config.Config.DEFAULT_LANGUAGE_CODES;
+import static org.snomed.snowstorm.core.data.domain.Concepts.*;
 import static org.snomed.snowstorm.core.data.services.BranchMetadataKeys.*;
 
 @Service
@@ -83,6 +86,9 @@ public class CodeSystemService {
 
 	@Autowired
 	private ConceptService conceptService;
+
+	@Autowired
+	private ReferenceSetMemberService memberService;
 
 	@Autowired
 	private ElasticsearchOperations elasticsearchOperations;
@@ -119,7 +125,7 @@ public class CodeSystemService {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	public synchronized void init() {
+	public synchronized void init() throws ServiceException {
 		// Create default code system if it does not yet exist
 		if (repository.findById(SNOMEDCT).isEmpty()) {
 			createCodeSystem(new CodeSystem(SNOMEDCT, MAIN));
@@ -146,7 +152,7 @@ public class CodeSystemService {
 		return findOneByBranchPath(branchPath) != null;
 	}
 
-	public synchronized CodeSystem createCodeSystem(CodeSystem newCodeSystem) {
+	public synchronized CodeSystem createCodeSystem(CodeSystem newCodeSystem) throws ServiceException {
 		validatorService.validate(newCodeSystem);
 		if (repository.findById(newCodeSystem.getShortName()).isPresent()) {
 			throw new IllegalArgumentException("A code system already exists with short name " + newCodeSystem.getShortName());
@@ -215,6 +221,26 @@ public class CodeSystemService {
 
 		repository.save(newCodeSystem);
 		logger.info("Code System '{}' created.", newCodeSystem.getShortName());
+
+		if (newCodeSystem.isPostcoordinatedNullSafe()) {
+			Concept postcoordinatedExpressionModule = new Concept(uriModuleId, uriModuleId)
+					.addRelationship(new Relationship(Concepts.ISA, MODULE))
+					.addDescription(new Description("Postcoordinated expression module (core metadata concept)")
+							.setTypeId(Concepts.FSN).addAcceptability(US_EN_LANG_REFSET, PREFERRED_CONSTANT))
+					.addDescription(new Description("Postcoordinated expression module")
+							.setTypeId(Concepts.SYNONYM).addAcceptability(US_EN_LANG_REFSET, PREFERRED_CONSTANT));
+			Concept equivalentConceptMapConcept = new Concept()
+					.setModuleId(uriModuleId)
+					.addRelationship(new Relationship(Concepts.ISA, ASSOCIATION_TYPE_REFSET))
+					.addDescription(new Description("Expression equivalent concept association reference set (foundation metadata concept)")
+							.setTypeId(Concepts.FSN).addAcceptability(US_EN_LANG_REFSET, PREFERRED_CONSTANT))
+					.addDescription(new Description("Expression equivalent concept association")
+									.setTypeId(Concepts.SYNONYM).addAcceptability(US_EN_LANG_REFSET, PREFERRED_CONSTANT));
+			conceptService.batchCreate(List.of(postcoordinatedExpressionModule, equivalentConceptMapConcept), branchPath);
+			sBranchService.setMetadataItem(branchPath,
+					ExpressionRepositoryService.EXPRESSION_EQUIVALENT_CONCEPTS_ASSOCIATION_METADATA_KEY, equivalentConceptMapConcept.getId());
+		}
+
 		return newCodeSystem;
 	}
 
