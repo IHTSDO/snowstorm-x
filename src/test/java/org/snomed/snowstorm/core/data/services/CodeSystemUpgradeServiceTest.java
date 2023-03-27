@@ -48,7 +48,7 @@ class CodeSystemUpgradeServiceTest extends AbstractTest {
     private CodeSystem LOINC;
 
     @BeforeEach
-    void setup() {
+    void setup() throws ServiceException {
         MAIN = new CodeSystem("SNOMEDCT", "MAIN");
         codeSystemService.createCodeSystem(MAIN);
     }
@@ -177,7 +177,7 @@ class CodeSystemUpgradeServiceTest extends AbstractTest {
     }
 
     @Test
-    void upgradeBlocked_whenMissingAdditionalDependency() {
+    void upgradeBlocked_whenMissingAdditionalDependency() throws ServiceException {
         setUpAdditionalDependencies();
         // Version MAIN
         codeSystemService.createVersion(MAIN, 20250101, "International Jan 2025");
@@ -211,7 +211,7 @@ class CodeSystemUpgradeServiceTest extends AbstractTest {
     }
 
     @Test
-    void upgradeAllowed_whenNoAdditionalDependencies() {
+    void upgradeAllowed_whenNoAdditionalDependencies() throws ServiceException {
         // Version MAIN for 20241101
         codeSystemService.createVersion(MAIN, 20241101, "International 20241101");
         // Setup: Extension only depends on International (no additional dependencies)
@@ -283,7 +283,7 @@ class CodeSystemUpgradeServiceTest extends AbstractTest {
         assertEquals(20250101, upgradedExtension.getDependantVersionEffectiveTime());
     }
 
-    private void setUpAdditionalDependencies() {
+    private void setUpAdditionalDependencies() throws ServiceException {
         createMDRS(CORE_MODULE, MAIN.getBranchPath(), MODEL_MODULE, null);
         codeSystemService.createVersion(MAIN, 20241101, "International November release 2024");
 

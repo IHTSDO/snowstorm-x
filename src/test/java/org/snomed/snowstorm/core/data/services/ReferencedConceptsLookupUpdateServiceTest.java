@@ -698,7 +698,7 @@ class ReferencedConceptsLookupUpdateServiceTest extends AbstractTest {
         return members;
     }
     @Test
-    void testBypassThresholdCheckingForRefsetIdHavingExistingLookups() {
+    void testBypassThresholdCheckingForRefsetIdHavingExistingLookups() throws ServiceException {
         // Create a parent code system and add lookups
         CodeSystem main = new CodeSystem("SNOMEDCT", "MAIN");
         codeSystemService.createCodeSystem(main);
@@ -717,7 +717,7 @@ class ReferencedConceptsLookupUpdateServiceTest extends AbstractTest {
         assertEquals(1, extensionLookups.get(0).getTotal());
     }
     @Test
-    void testSkipRebuildingWhenNoLookupsFoundInParentBranch() {
+    void testSkipRebuildingWhenNoLookupsFoundInParentBranch() throws ServiceException {
         // Create a parent code system without lookups for the refset ID
         CodeSystem main = new CodeSystem("SNOMEDCT", "MAIN");
         codeSystemService.createCodeSystem(main);
@@ -735,7 +735,7 @@ class ReferencedConceptsLookupUpdateServiceTest extends AbstractTest {
     }
 
     @Test
-    void testRebuildWhenAddingRefsetMembersForTheFirstTime() {
+    void testRebuildWhenAddingRefsetMembersForTheFirstTime() throws ServiceException {
         // Create a parent code system without lookups for the refset ID
         CodeSystem main = new CodeSystem("SNOMEDCT", "MAIN");
         codeSystemService.createCodeSystem(main);
