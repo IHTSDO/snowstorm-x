@@ -222,12 +222,16 @@
 
 		<!-- Logging -->
 		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-to-slf4j</artifactId>
-		</dependency>
-		<dependency><!-- Old logging used by owl-toolkit -->
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-1.2-api</artifactId>
 		</dependency>
 
 		<!-- Test dependencies -->
@@ -286,17 +290,6 @@
 			<artifactId>spring-cloud-starter-vault-config</artifactId>
 		</dependency>
 	</dependencies>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 	<build>
 		<plugins>
 			<!-- Docker Image Build -->
@@ -355,7 +348,6 @@
 					<plugin>
 						<groupId>org.vafer</groupId>
 						<artifactId>jdeb</artifactId>
-						<version>1.1.1</version>
 						<executions>
 							<execution>
 								<phase>package</phase>
@@ -415,9 +407,6 @@
 		<repository>
 			<id>ihtsdo-releases</id>
 			<name>ihtsdo-releases</name>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
@@ -429,9 +418,6 @@
 			<releases>
 				<enabled>false</enabled>
 			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
 			<url>https://nexus3.ihtsdotools.org/repository/maven-snapshots/</url>
 		</repository>
 	</repositories>
