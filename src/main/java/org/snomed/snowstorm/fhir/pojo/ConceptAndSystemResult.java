@@ -8,6 +8,7 @@ public class ConceptAndSystemResult {
 	private final Concept concept;
 	private final FHIRCodeSystemVersion codeSystemVersion;
 	private String message;
+	private boolean postcoordinated;
 
 	public ConceptAndSystemResult(Concept concept, FHIRCodeSystemVersion codeSystemVersion) {
 		this.concept = concept;
@@ -34,5 +35,14 @@ public class ConceptAndSystemResult {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	public boolean isPostcoordinated() {
+		return postcoordinated;
+	}
+
+	public ConceptAndSystemResult setPostcoordinated(boolean postcoordinated) {
+		this.postcoordinated = postcoordinated;
+		return this;
 	}
 }
