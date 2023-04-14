@@ -5,13 +5,14 @@
 	<name>Snowstorm X</name>
 	<description>Terminology Server using Elasticsearch with advanced SNOMED CT features</description>
 
-	<artifactId>snowstorm-x</artifactId>
-	<version>8.3.0</version>
 	<parent>
 		<groupId>org.snomed</groupId>
 		<artifactId>snomed-parent-bom</artifactId>
 		<version>1.0.12</version>
 	</parent>
+
+	<artifactId>snowstorm-x</artifactId>
+	<version>8.3.0</version>
 
 	<properties>
 		<packageName>${project.artifactId}</packageName>
