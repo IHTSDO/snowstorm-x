@@ -12,7 +12,7 @@
 	</parent>
 
 	<artifactId>snowstorm-x</artifactId>
-	<version>8.3.0</version>
+	<version>8.3.1-SNAPSHOT</version>
 
 	<properties>
 		<packageName>${project.artifactId}</packageName>
