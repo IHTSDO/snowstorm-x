@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.snomed</groupId>
 		<artifactId>snomed-parent-bom</artifactId>
-		<version>1.0.12</version>
+		<version>1.0.11-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>snowstorm-x</artifactId>
