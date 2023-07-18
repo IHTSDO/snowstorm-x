@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.snomed</groupId>
 		<artifactId>snomed-parent-bom</artifactId>
-		<version>1.0.11-SNAPSHOT</version>
+		<version>1.0.12</version>
 	</parent>
 
 	<artifactId>snowstorm-x</artifactId>
@@ -203,6 +203,10 @@
 				<exclusion>
 					<groupId>org.glassfish</groupId>
 					<artifactId>javax.el</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.thymeleaf</groupId>
+					<artifactId>*</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>

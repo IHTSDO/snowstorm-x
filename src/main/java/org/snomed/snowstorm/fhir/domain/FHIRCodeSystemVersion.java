@@ -139,7 +139,7 @@ public class FHIRCodeSystemVersion {
 		} else {
 			id = FHIRCodeSystemService.SCT_ID_PREFIX + moduleId + "_" + UNVERSIONED;
 			url = SNOMED_URI_UNVERSIONED;
-			version = SNOMED_URI + "/" + moduleId;
+			version = SNOMED_URI_UNVERSIONED + "/" + moduleId;
 			content = CodeSystem.CodeSystemContentMode.COMPLETE.toCode();
 		}
 		snomedBranch = snomedCodeSystem.getBranchPath();
