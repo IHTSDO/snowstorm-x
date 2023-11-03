@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## 9.0.1 Fix Release (November 2023)
+Minor release for newer LOINC packages.
+
+### Fixes
+- LOINC loader configured for file format of 7.23 and above.
+
+
 ## 9.0.0 Release (September 2023)
 Major release with Java 17 upgrade.
 
