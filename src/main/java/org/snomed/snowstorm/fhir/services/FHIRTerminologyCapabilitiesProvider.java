@@ -7,7 +7,8 @@ import ca.uhn.fhir.rest.server.provider.ServerCapabilityStatementProvider;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 import ca.uhn.fhir.rest.annotation.Metadata;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import org.springframework.boot.info.BuildProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * See https://www.hl7.org/fhir/terminologycapabilities.html
@@ -16,11 +17,8 @@ import org.springframework.boot.info.BuildProperties;
  * See https://github.com/jamesagnew/hapi-fhir/issues/1681
  */
 public class FHIRTerminologyCapabilitiesProvider extends ServerCapabilityStatementProvider {
-
-	private final BuildProperties buildProperties;
-	private final FHIRCodeSystemService codeSystemService;
-
-	public FHIRTerminologyCapabilitiesProvider(RestfulServer theServer, BuildProperties buildProperties, FHIRCodeSystemService codeSystemService) {
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	public FHIRTerminologyCapabilitiesProvider(RestfulServer theServer) {
 		super(theServer);
 		this.buildProperties = buildProperties;
 		this.codeSystemService = codeSystemService;
@@ -28,8 +26,9 @@ public class FHIRTerminologyCapabilitiesProvider extends ServerCapabilityStateme
 
 	@Metadata(cacheMillis = 0)
 	public IBaseConformance getMetadataResource(HttpServletRequest request, RequestDetails requestDetails) {
-		if ("terminology".equals(request.getParameter("mode"))) {
-			return new FHIRTerminologyCapabilities().withDefaults(buildProperties, codeSystemService);
+		logger.info(requestDetails.getCompleteUrl());
+		if (request.getParameter("mode") != null && request.getParameter("mode").equals("terminology")) {
+			return new FHIRTerminologyCapabilities().withDefaults();
 		} else {
 			return super.getServerConformance(request, requestDetails);
 		}
