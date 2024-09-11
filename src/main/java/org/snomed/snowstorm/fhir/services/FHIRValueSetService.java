@@ -178,7 +178,7 @@ public class FHIRValueSetService {
 		notSupported("contextDirection", params.getContextDirection());
 		notSupported("date", params.getDate());
 		notSupported("designation", params.getDesignations());
-		notSupported("excludeNested", params.getExcludeNested());
+		//notSupported("excludeNested", params.getExcludeNested());
 		notSupported("excludeNotForUI", params.getExcludeNotForUI());
 		notSupported("excludePostCoordinated", params.getExcludePostCoordinated());
 		notSupported("version", params.getVersion());// Not part of the FHIR API spec but requested under MAINT-1363
@@ -865,6 +865,15 @@ public class FHIRValueSetService {
 	}
 
 	private void collectConstraints(ValueSet.ConceptSetComponent include, FHIRCodeSystemVersion codeSystemVersion, Set<ConceptConstraint> inclusionConstraints, boolean activeOnly) {
+
+		if(activeOnly) {
+			if (FHIRHelper.isSnomedUri(codeSystemVersion.getUrl()) || codeSystemVersion.getUrl().equals("http://loinc.org") || codeSystemVersion.getUrl().startsWith("http://hl7.org/fhir/sid/icd-10")) {
+				//do nothing
+			} else {
+				inclusionConstraints.add(new ConceptConstraint().setActiveOnly(activeOnly));
+			}
+		}
+
 		if (!include.getConcept().isEmpty()) {
 			List<String> codes = include.getConcept().stream().map(ValueSet.ConceptReferenceComponent::getCode).collect(Collectors.toList());
 			inclusionConstraints.add(new ConceptConstraint(codes));
