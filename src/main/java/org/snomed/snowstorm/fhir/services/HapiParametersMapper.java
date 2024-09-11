@@ -14,10 +14,7 @@ import org.snomed.snowstorm.fhir.pojo.ConceptAndSystemResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class HapiParametersMapper implements FHIRConstants {
@@ -60,6 +57,9 @@ public class HapiParametersMapper implements FHIRConstants {
 		Parameters parameters = new Parameters();
 		parameters.addParameter("code", concept.getConceptId());
 		parameters.addParameter("display", fhirHelper.getPreferredTerm(concept, designations));
+		Optional.ofNullable(conceptAndSystemResult.codeSystemVersion().getName()).ifPresent(x->parameters.addParameter("name", x));
+		//Optional.ofNullable(codeSystem.getTitle()).ifPresent(x->parameters.addParameter("title", x));
+		addSystemAndVersion(parameters, conceptAndSystemResult.codeSystemVersion());
 		boolean postcoordinatedCodeOnStandardCodeSystem = postcoordinated && !codeSystemVersion.getSnomedCodeSystem().isPostcoordinatedNullSafe();
 		parameters.addParameter("name", codeSystemVersion.getTitle() + (postcoordinatedCodeOnStandardCodeSystem ? " (Postcoordinated)" : ""));
 		addSystemAndVersion(parameters, codeSystemVersion);
