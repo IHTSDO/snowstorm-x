@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.io.FileUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.OperationOutcome;
@@ -22,9 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,10 +55,13 @@ public class FHIRLoadPackageService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	public void uploadPackageResources(File packageFile, Set<String> resourceUrlsToImport, String submittedFileName, boolean testValueSets) throws IOException {
-		FHIRHelper.readOnlyCheck(readOnlyMode);
+		byte[] packageBytes = FileUtils.readFileToByteArray(packageFile);
+		uploadPackageResources(packageBytes, resourceUrlsToImport,submittedFileName, testValueSets);
+	}
 
+	public void uploadPackageResources(byte[] packageBytes, Set<String> resourceUrlsToImport, String submittedFileName, boolean testValueSets) throws IOException {
 		JsonParser jsonParser = (JsonParser) fhirContext.newJsonParser();
-		FHIRPackageIndex index = extractObject(packageFile, ".index.json", FHIRPackageIndex.class, jsonParser);
+		FHIRPackageIndex index = extractObject(new ByteArrayInputStream(packageBytes), ".index.json", FHIRPackageIndex.class, jsonParser);
 		Set<String> supportedResourceTypes = Set.of("CodeSystem", "ValueSet");
 		boolean importAll = resourceUrlsToImport.contains("*");
 		List<FHIRPackageIndexFile> filesToImport = index.getFiles().stream()
@@ -76,7 +78,7 @@ public class FHIRLoadPackageService {
 			String id = indexFileToImport.getId();
 			String url = indexFileToImport.getUrl();
 			if (id != null && url != null) {
-				CodeSystem codeSystem = extractObject(packageFile, filename, CodeSystem.class, jsonParser);
+				CodeSystem codeSystem = extractObject(new ByteArrayInputStream(packageBytes), filename, CodeSystem.class, jsonParser);
 				codeSystem.setId(id);
 				codeSystem.setUrl(url);
 				if (FHIRHelper.isSnomedUri(codeSystem.getUrl())) {
@@ -113,7 +115,7 @@ public class FHIRLoadPackageService {
 			String id = indexFileToImport.getId();
 			String url = indexFileToImport.getUrl();
 			if (id != null && url != null) {
-				ValueSet valueSet = extractObject(packageFile, filename, ValueSet.class, jsonParser);
+				ValueSet valueSet = extractObject(new ByteArrayInputStream(packageBytes), filename, ValueSet.class, jsonParser);
 				valueSet.setId(id);
 				valueSet.setUrl(url);
 				valueSet.setVersion(indexFileToImport.getVersion());
@@ -151,8 +153,8 @@ public class FHIRLoadPackageService {
 		}
 	}
 
-	private <T> T extractObject(File packageFile, String archiveEntryName, Class<T> clazz, JsonParser jsonParser) throws IOException {
-		try (GzipCompressorInputStream gzipIn = new GzipCompressorInputStream(new FileInputStream(packageFile));
+	private <T> T extractObject(InputStream packageStream, String archiveEntryName, Class<T> clazz, JsonParser jsonParser) throws IOException {
+		try (GzipCompressorInputStream gzipIn = new GzipCompressorInputStream(packageStream);
 			 TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn)) {
 
 			ArchiveEntry entry;
