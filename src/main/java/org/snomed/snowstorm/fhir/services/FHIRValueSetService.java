@@ -576,6 +576,12 @@ public class FHIRValueSetService {
 		CodeSelectionCriteria codeSelectionCriteria = new CodeSelectionCriteria(getUserRef(valueSet));
 
 		ValueSet.ValueSetComposeComponent compose = valueSet.getCompose();
+        if (compose.hasInactive()){
+			activeOnly = (!compose.getInactive());
+		} else {
+			activeOnly = false;
+		}
+
 		for (ValueSet.ConceptSetComponent include : compose.getInclude()) {
 			if (include.hasSystem()) {
 				FHIRCodeSystemVersion codeSystemVersion = codeSystemVersionProvider.get(include.getSystem(), include.getVersion());
@@ -898,8 +904,11 @@ public class FHIRValueSetService {
 			}
 
 
-		}
-		else {
+		} else if (inclusion.isActiveOnly()!=null){
+			if (inclusion.isActiveOnly()) {
+				versionQuery.mustNot(termsQuery(FHIRConcept.Fields.PROPERTIES + ".inactive.value", Collections.singleton("true")));
+			}
+		} else {
 			String message = "Unrecognised constraints for ValueSet: " + valueSetUserRef;
 			logger.error(message);
 			throw exception(message, OperationOutcome.IssueType.EXCEPTION, 500);
@@ -909,7 +918,7 @@ public class FHIRValueSetService {
 	private void collectConstraints(ValueSet.ConceptSetComponent include, FHIRCodeSystemVersion codeSystemVersion, Set<ConceptConstraint> inclusionConstraints, boolean activeOnly) {
 
 		if(activeOnly) {
-			if (FHIRHelper.isSnomedUri(codeSystemVersion.getUrl()) || codeSystemVersion.getUrl().equals("http://loinc.org") || codeSystemVersion.getUrl().startsWith("http://hl7.org/fhir/sid/icd-10")) {
+			if (codeSystemVersion.isSnomed() || codeSystemVersion.getUrl().equals("http://loinc.org") || codeSystemVersion.getUrl().startsWith("http://hl7.org/fhir/sid/icd-10")) {
 				//do nothing
 			} else {
 				inclusionConstraints.add(new ConceptConstraint().setActiveOnly(activeOnly));
