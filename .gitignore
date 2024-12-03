@@ -13,5 +13,4 @@ snomed-drools-rules
 /tmp
 /local*
 authoring-traceability.log*
-/application.properties
-test.properties
+/src/main/resources/git.properties
