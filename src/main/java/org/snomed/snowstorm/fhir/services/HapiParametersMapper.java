@@ -57,9 +57,13 @@ public class HapiParametersMapper implements FHIRConstants {
 		Parameters parameters = new Parameters();
 		parameters.addParameter("code", concept.getConceptId());
 		parameters.addParameter("display", fhirHelper.getPreferredTerm(concept, designations));
-		Optional.ofNullable(codeSystem.getName()).ifPresent(x->parameters.addParameter("name", x));
+		Optional.ofNullable(conceptAndSystemResult.codeSystemVersion().getName()).ifPresent(x->parameters.addParameter("name", x));
 		//Optional.ofNullable(codeSystem.getTitle()).ifPresent(x->parameters.addParameter("title", x));
-		addSystemAndVersion(parameters, codeSystem);
+		addSystemAndVersion(parameters, conceptAndSystemResult.codeSystemVersion());
+		boolean postcoordinatedCodeOnStandardCodeSystem = postcoordinated && !codeSystemVersion.getSnomedCodeSystem().isPostcoordinatedNullSafe();
+		parameters.addParameter("name", codeSystemVersion.getTitle() + (postcoordinatedCodeOnStandardCodeSystem ? " (Postcoordinated)" : ""));
+		addSystemAndVersion(parameters, codeSystemVersion);
+		parameters.addParameter("active", concept.isActive());
 		parameters.addParameter("inactive", !concept.isActive());
 		if (!postcoordinated) {
 			addProperties(parameters, concept, properties);
