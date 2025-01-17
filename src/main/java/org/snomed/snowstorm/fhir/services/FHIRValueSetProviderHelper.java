@@ -59,8 +59,11 @@ class FHIRValueSetProviderHelper {
 					findParameterCanonicalOrNull(parametersParameterComponents, "system-version"),
 					findParameterCanonicalOrNull(parametersParameterComponents, "check-system-version"),
 					findParameterCanonicalOrNull(parametersParameterComponents, "force-system-version"),
-					findParameterStringOrNull(parametersParameterComponents, "version"));
-
+					findParameterStringOrNull(parametersParameterComponents, "version"),
+					findParameterStringOrNull(parametersParameterComponents, "property"));
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	static ValueSetExpansionParameters getValueSetExpansionParameters(
@@ -85,7 +88,8 @@ class FHIRValueSetProviderHelper {
 			final StringType systemVersion,
 			final StringType checkSystemVersion,
 			final StringType forceSystemVersion,
-			final StringType version) {
+			final StringType version,
+			final CodeType property) {
 
 		try {
 			return new ValueSetExpansionParameters(
@@ -111,7 +115,8 @@ class FHIRValueSetProviderHelper {
 					CanonicalUri.fromString(getOrNull(systemVersion)),
 					CanonicalUri.fromString(getOrNull(checkSystemVersion)),
 					CanonicalUri.fromString(getOrNull(forceSystemVersion)),
-					getOrNull(version));
+					getOrNull(version),
+					getOrNull(property));
 		} catch (URISyntaxException e) {
 			throw  FHIRHelper.exception("Invalid url parameter.", OperationOutcome.IssueType.INVALID, 400);
 		}
