@@ -186,8 +186,11 @@ public class FHIRConceptService {
 				.build();
 		searchQuery.setTrackTotalHits(true);
 		updateQueryWithSearchAfter(searchQuery, pageRequest);
-		logger.info("QUERY:"+searchQuery.getQuery().toString());
-		return toPage(elasticsearchTemplate.search(searchQuery, FHIRConcept.class), pageRequest);
+
+		logger.debug("QUERY:"+searchQuery.getQuery().toString());
+
+		return toPage(elasticsearchOperations.search(searchQuery, FHIRConcept.class), pageRequest);
+
 	}
 
 	public SearchAfterPage<String> findConceptCodes(BoolQuery.Builder fhirConceptQuery, PageRequest pageRequest) {
