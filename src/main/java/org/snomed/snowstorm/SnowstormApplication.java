@@ -131,14 +131,17 @@ public class SnowstormApplication extends Config implements ApplicationRunner {
 			} else if (applicationArguments.containsOption(SNOMED_VERSION)) {
 				// Import snomed edition or extension 'Snapshot' from uri at startup including the dependencies
 				String releaseUri = getOneValue(applicationArguments, SNOMED_VERSION);
-				String extensionName = applicationArguments.containsOption(EXTENSION_COUNTRY_CODE) ? getOneValue(applicationArguments, EXTENSION_COUNTRY_CODE) : null;
+				String extensionName = getOneValueOrNull(applicationArguments, EXTENSION_COUNTRY_CODE);
 				snomedSyndicationService.importSnomedEditionAndExtension(releaseUri, extensionName);
 			}
+			boolean importLoinc = applicationArguments.containsOption(IMPORT_LOINC_TERMINOLOGY);
 			if (applicationArguments.containsOption(IMPORT_HL_7_TERMINOLOGY)) {
-				hl7SyndicationService.importHl7Terminology();
+				String releaseVersion = getOneValueOrNull(applicationArguments, IMPORT_HL_7_TERMINOLOGY);
+				hl7SyndicationService.importHl7Terminology(releaseVersion, importLoinc);
 			}
-			if (applicationArguments.containsOption(IMPORT_LOINC_TERMINOLOGY)) {
-				loincSyndicationService.importLoincTerminology();
+			if (importLoinc) {
+				String releaseVersion = getOneValueOrNull(applicationArguments, IMPORT_LOINC_TERMINOLOGY);
+				loincSyndicationService.importLoincTerminology(releaseVersion);
 			}
 			if (applicationArguments.containsOption(EXIT)) {
 				logger.info("Exiting application.");
@@ -152,6 +155,10 @@ public class SnowstormApplication extends Config implements ApplicationRunner {
 			throw e;
 		}
 	}
+
+	private String getOneValueOrNull(ApplicationArguments applicationArguments, String argName) {
+        return applicationArguments.getOptionValues(argName).isEmpty() ? null : getOneValue(applicationArguments, argName);
+    }
 
 	private String getOneValue(ApplicationArguments applicationArguments, String argName) {
 		List<String> values = applicationArguments.getOptionValues(argName);
