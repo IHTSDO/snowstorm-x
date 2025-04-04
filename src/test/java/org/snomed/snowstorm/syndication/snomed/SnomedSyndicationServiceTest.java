@@ -12,8 +12,12 @@ import org.snomed.snowstorm.core.data.domain.CodeSystem;
 import org.snomed.snowstorm.core.data.services.CodeSystemService;
 import org.snomed.snowstorm.core.data.services.ServiceException;
 import org.snomed.snowstorm.core.rf2.rf2import.ImportService;
+import org.snomed.snowstorm.syndication.common.SyndicationImportParams;
+import org.snomed.snowstorm.syndication.common.SyndicationImportStatusService;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
@@ -21,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SyndicationServiceTest {
+class SnomedSyndicationServiceTest {
 
     private static final String RELEASE_URI = "http://snomed.info/sct/11000172109/version/20250315";
 
@@ -33,6 +37,9 @@ class SyndicationServiceTest {
 
     @Mock
     private CodeSystemService codeSystemService;
+
+    @Mock
+    private SyndicationImportStatusService importStatusService;
 
     @Spy
     @InjectMocks
@@ -49,20 +56,20 @@ class SyndicationServiceTest {
         String invalidUri = "invalid-uri";
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                syndicationService.importSnomedEditionAndExtension(invalidUri, "BE"));
+                syndicationService.importTerminologyAndStoreResult(new SyndicationImportParams(invalidUri, "BE", false)));
 
         assertTrue(exception.getMessage().contains("not a valid SNOMED CT Edition Version URI"));
     }
 
     @Test
-    void testImportSnomedEditionAndExtension_ValidURI_CallsImportMethods() throws IOException, ServiceException, ReleaseImportException {
-        List<String> filePaths = List.of("edition.zip", "extension.zip");
+    void testImportSnomedEditionAndExtension_ValidURI_CallsImportMethods() throws IOException, ServiceException, ReleaseImportException, InterruptedException {
+        List<File> filePaths = List.of(new File("edition.zip"), new File("extension.zip"));
 
         when(syndicationClient.downloadPackages(RELEASE_URI, "testUser", "testPass")).thenReturn(filePaths);
         doNothing().when(importService).importArchive(any(), any());
         doReturn(null).when(syndicationService).getFileInputStream(any());
 
-        syndicationService.importSnomedEditionAndExtension(RELEASE_URI, "BE");
+        syndicationService.importTerminologyAndStoreResult(new SyndicationImportParams(RELEASE_URI, "BE", false));
 
         verify(syndicationClient).downloadPackages(RELEASE_URI, "testUser", "testPass");
         verify(importService, times(2)).importArchive(any(), any());
@@ -74,7 +81,7 @@ class SyndicationServiceTest {
 
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                syndicationService.importSnomedEditionAndExtension(RELEASE_URI, "BE"));
+                syndicationService.importTerminologyAndStoreResult(new SyndicationImportParams(RELEASE_URI, "BE", false)));
 
         assertEquals("Syndication username is blank.", exception.getMessage());
     }
@@ -85,7 +92,7 @@ class SyndicationServiceTest {
 
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                syndicationService.importSnomedEditionAndExtension(RELEASE_URI, "BE"));
+                syndicationService.importTerminologyAndStoreResult(new SyndicationImportParams(RELEASE_URI, "BE", false)));
 
         assertEquals("Syndication password is blank.", exception.getMessage());
     }
@@ -101,8 +108,9 @@ class SyndicationServiceTest {
     }
 
     @Test
-    void testImportExtension_ValidInput_CreatesCodeSystem() throws ServiceException {
+    void testImportExtension_ValidInput_CreatesCodeSystem() throws ServiceException, FileNotFoundException {
         List<String> filePaths = List.of("edition.zip", "extension.zip");
+        doReturn(null).when(syndicationService).getFileInputStream(any());
 
         ReflectionTestUtils.invokeMethod(syndicationService, "importExtension", RELEASE_URI, "BE", filePaths);
 
