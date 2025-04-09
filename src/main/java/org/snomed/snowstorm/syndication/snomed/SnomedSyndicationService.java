@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import static org.snomed.snowstorm.core.data.services.CodeSystemService.MAIN;
 import static org.snomed.snowstorm.core.util.FileUtils.findFile;
 import static org.snomed.snowstorm.fhir.services.FHIRHelper.SNOMED_URI_MODULE_AND_VERSION_PATTERN;
+import static org.snomed.snowstorm.fhir.services.FHIRHelper.SNOMED_URI_MODULE_PATTERN;
 import static org.snomed.snowstorm.syndication.common.SyndicationConstants.IMPORT_SNOMED_TERMINOLOGY;
 import static org.snomed.snowstorm.syndication.common.SyndicationConstants.LOCAL_VERSION;
 
@@ -33,10 +34,10 @@ public class SnomedSyndicationService extends SyndicationService {
 
     public static final String SNOMED = "Snomed";
 
-    @Value("${SNOMED_USERNAME}")
+    @Value("${SNOMED_USERNAME:empty}")
     private String snomedUsername;
 
-    @Value("${SNOMED_PASSWORD}")
+    @Value("${SNOMED_PASSWORD:empty}")
     private String snomedPassword;
 
     @Value("${syndication.snomed.working-directory}")
@@ -57,7 +58,9 @@ public class SnomedSyndicationService extends SyndicationService {
     @Autowired
     private CodeSystemService codeSystemService;
 
-    private String releaseUri;
+    private static final String DEFAULT_VALUE = "empty";
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public SnomedSyndicationService() {
         super(SNOMED, LoggerFactory.getLogger(SnomedSyndicationService.class));
@@ -65,14 +68,14 @@ public class SnomedSyndicationService extends SyndicationService {
 
     @Override
     protected List<File> fetchTerminologyPackages(SyndicationImportParams params) throws ServiceException, IOException {
-        releaseUri = params.getVersion();
+        releaseUri = params.version();
         if(LOCAL_VERSION.equals(releaseUri)) {
             return retrieveLocalPackages(params);
-        } else {
-            validateReleaseUriPattern(releaseUri);
-            validateSyndicationCredentials();
-            return syndicationClient.downloadPackages(releaseUri, snomedUsername, snomedPassword);
         }
+        releaseUri = releaseUri.contains("version") ? releaseUri : getLatestTerminologyVersion(params.version());
+        validateReleaseUriAndVersionPattern(releaseUri);
+        validateSyndicationCredentials();
+        return syndicationClient.downloadPackages(releaseUri, snomedUsername, snomedPassword);
     }
 
     /**
@@ -80,10 +83,10 @@ public class SnomedSyndicationService extends SyndicationService {
      */
     @Override
     protected void importTerminology(SyndicationImportParams params, List<File> files) throws ServiceException {
-        String releaseUri = params.getVersion();
+        String releaseUri = params.version();
         List<String> packageFilePaths = files.stream().map(File::getAbsolutePath).collect(Collectors.toList());
         importEdition(packageFilePaths);
-        importExtension(releaseUri, params.getExtensionName(), packageFilePaths);
+        importExtension(releaseUri, params.extensionName(), packageFilePaths);
     }
 
     private List<File> retrieveLocalPackages(SyndicationImportParams params) throws ServiceException, IOException {
@@ -91,7 +94,7 @@ public class SnomedSyndicationService extends SyndicationService {
         packageFilePaths.add(
                 findFile(workingDirectory, editionFileNamePattern)
                         .orElseThrow(() -> new ServiceException("Could not find edition file with pattern " + editionFileNamePattern)));
-        if(params.getExtensionName() != null) {
+        if(params.extensionName() != null) {
             packageFilePaths.add(
                     findFile(workingDirectory, extensionFileNamePattern)
                             .orElseThrow(() -> new ServiceException("Could not find extension file with pattern " + extensionFileNamePattern)));
@@ -99,20 +102,28 @@ public class SnomedSyndicationService extends SyndicationService {
         return packageFilePaths;
     }
 
-    private static void validateReleaseUriPattern(String releaseUri) {
+    private static void validateReleaseUriAndVersionPattern(String releaseUri) {
         if (!SNOMED_URI_MODULE_AND_VERSION_PATTERN.matcher(releaseUri).matches()) {
-            throw new IllegalArgumentException("Parameter ' " + IMPORT_SNOMED_TERMINOLOGY + " ' is not a valid SNOMED CT Edition Version URI. " +
+            throw new IllegalArgumentException("Parameter ' " + IMPORT_SNOMED_TERMINOLOGY + " ' is not a valid SNOMED CT release version URI. " +
                     "Please use the format: 'http://snomed.info/sct/[module-id]/version/[YYYYMMDD]'. " +
-                    "See http://snomed.org/uri for examples of Edition version URIs");
+                    "See https://confluence.ihtsdotools.org/display/DOCURI/2.1+URIs+for+Editions+and+Versions for examples of release version URIs");
+        }
+    }
+
+    private static void validateReleaseUriPattern(String releaseUri) {
+        if (!SNOMED_URI_MODULE_PATTERN.matcher(releaseUri).matches()) {
+            throw new IllegalArgumentException("Parameter ' " + IMPORT_SNOMED_TERMINOLOGY + " ' is not a valid SNOMED CT release URI. " +
+                    "Please use the format: 'http://snomed.info/sct/[module-id]'. " +
+                    "See https://confluence.ihtsdotools.org/display/DOCEXTPG/4.4.2+Edition+URI+Examples for examples of release URIs");
         }
     }
 
     private void validateSyndicationCredentials() {
-        if (Strings.isBlank(snomedUsername)) {
+        if (Strings.isBlank(snomedUsername) || DEFAULT_VALUE.equals(snomedUsername)) {
             logger.error("Syndication username is blank.");
             throw new IllegalArgumentException("Syndication username is blank.");
         }
-        if (Strings.isBlank(snomedPassword)) {
+        if (Strings.isBlank(snomedPassword) || DEFAULT_VALUE.equals(snomedPassword)) {
             logger.error("Syndication password is blank.");
             throw new IllegalArgumentException("Syndication password is blank.");
         }
@@ -156,7 +167,12 @@ public class SnomedSyndicationService extends SyndicationService {
     }
 
     @Override
-    protected String getLatestTerminologyVersion() {
-        throw new IllegalArgumentException("Not yet implemented");
+    protected String getLatestTerminologyVersion(String releaseUri) throws IOException, ServiceException {
+        validateReleaseUriPattern(releaseUri);
+        return syndicationClient.getFeed().getEntries().stream()
+                .map(SyndicationFeedEntry::getContentItemVersion)
+                .filter(contentItemVersion -> contentItemVersion.contains(releaseUri))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException("No snomed release found related to the supplied release URI: " + releaseUri));
     }
 }
