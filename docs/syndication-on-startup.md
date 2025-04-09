@@ -17,8 +17,9 @@ These terminologies can be loaded in three different ways:
 ### Import Options
 
 - **Load the latest version**: The app checks whether the latest version is already imported. If not, it downloads and imports it.
-- **Load a specific version**: The app checks for the presence of a specific version. If not available, it will download and import it.
-- **Load a local version**: If you already have the terminology file locally, the app will import it from the local filesystem.
+- **Load a specific version**: The app checks for the presence of a specific version. If not already imported, it will download and import it.
+- **Load a local version**: If you already have the terminology file locally, the app can import it from the local filesystem. 
+Please then make sure that the file is present in the docker container and that the filename respects the format specified in the application.properties file (see syndication.hl7.fileNamePattern, syndication.loinc.fileNamePattern, ...).
 
 These options must be passed as command-line arguments to the application (see Docker Compose section).
 
@@ -27,14 +28,6 @@ These options must be passed as command-line arguments to the application (see D
 - **Minimal Docker Image**: No terminology files are bundled in the image, keeping it lightweight.
 - **Runtime Fetching**: Terminologies are downloaded on startup from their official sources.
 - **Licensing and Access**: Some terminologies (e.g., SNOMED CT and LOINC) require licensed access and credentials.
-
-### Import Monitoring
-
-You can monitor import status via the following endpoint:
-
-```http
-GET /syndication/status
-```
 
 ---
 
@@ -53,16 +46,16 @@ GET /syndication/status
 - 🌐 Latest: [loinc.org/downloads](https://loinc.org/downloads/)
 - 📚 Archive: [loinc.org/downloads/archive](https://loinc.org/downloads/archive/)
 - 📦 Downloaded via Puppeteer script (`download_loinc.mjs`)
-- 📜 License: Ensure compliance with LOINC's terms and conditions
+- 📜 License: You accept LOINC's terms and conditions whilst importing this terminology source using Snowstorm
 
 ### SNOMED CT Terminology
 
 - 🔐 Requires login credentials (env vars)
 - 📦 Supports international editions and optional country-specific extensions
-- ⏱️ Import Time: ~30 minutes (Belgian + Intl edition)
+- ⏱️ Import Time: ~30 minutes (Belgian + International edition)
 - 🌐 Source: [MLDS](https://mlds.ihtsdotools.org/#/viewReleases)
 - 🔗 Edition URI format: [SNOMED URI Examples](https://confluence.ihtsdotools.org/display/DOCEXTPG/4.4.2+Edition+URI+Examples)
-
+- 📜 License: You accept SNOMED's terms and conditions whilst importing this terminology source using Snowstorm
 ---
 
 ## Docker Compose Architecture
@@ -152,13 +145,13 @@ command: [
   "--import-hl7-terminology",
   #"--import-hl7-terminology=local",
   #"--import-hl7-terminology=6.1.0",
-  #"--import-snomed-terminology=local",
-  #"--import-snomed-terminology=http://snomed.info/sct/11000172109",
-  "--import-snomed-terminology=http://snomed.info/sct/11000172109/version/20250315",
-  "--extension-country-code=BE",
   #"--import-loinc-terminology",
   "--import-loinc-terminology=local",
   #"--import-loinc-terminology=2.78",
+  #"--import-snomed-terminology=http://snomed.info/sct/11000172109", # latest belgian extension (+ international edition dependency)
+  #"--import-snomed-terminology=local",
+  "--import-snomed-terminology=http://snomed.info/sct/11000172109/version/20250315",
+  "--extension-country-code=BE", # mandatory when loading snomed extensions
 ]
 ```
 
@@ -188,8 +181,8 @@ If you're not using `docker-compose`, ensure these are provided via another secu
 - ✅ The application avoids re-importing already-loaded versions.
 - 🔐 Avoid committing `.env` files or credentials into version control.
 - 📉 Imports are only triggered if no previous successful import is found for the requested version.
-- 🔎 Use the `/syndication/status` endpoint to monitor the progress or troubleshoot issues.
-
+- 🔎 Use the `GET /syndication/status` endpoint to monitor the progress or troubleshoot issues.
+- 💡 In the future, the dockerfile will be published. The docker-compose file in this project is just an example and can be used as a reference.
 ---
 
 ## Resources

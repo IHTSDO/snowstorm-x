@@ -37,9 +37,9 @@ public class LoincSyndicationService extends SyndicationService {
 
     @Override
     protected List<File> fetchTerminologyPackages(SyndicationImportParams params) throws IOException, InterruptedException, ServiceException {
-        Optional<File> file = LOCAL_VERSION.equals(params.getVersion())
+        Optional<File> file = LOCAL_VERSION.equals(params.version())
                 ? findFile(workingDirectory, fileNamePattern)
-                : downloadLoincZip(params.getVersion());
+                : downloadLoincZip(params.version());
         return singletonList(file.orElseThrow(() -> new ServiceException("Loinc terminology file not found, cannot be imported")));
     }
 
@@ -77,7 +77,7 @@ public class LoincSyndicationService extends SyndicationService {
     }
 
     @Override
-    protected String getLatestTerminologyVersion() throws IOException, InterruptedException {
+    protected String getLatestTerminologyVersion(String params) throws IOException, InterruptedException {
         return getSingleLineCommandResult("curl -s https://loinc.org/downloads/ | grep -oP 'Loinc[_-]\\K[0-9]+\\.[0-9]+' | head -n 1");
     }
 }
