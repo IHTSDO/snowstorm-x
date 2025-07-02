@@ -42,8 +42,19 @@ public class FHIRRestConfig {
 		hapiServlet.setServerVersion(buildProperties != null ? buildProperties.getVersion() : "development");
 		hapiServlet.setDefaultResponseEncoding(EncodingEnum.JSON);
 
-		ResponseHighlighterInterceptor interceptor = new ResponseHighlighterInterceptor();
-		//hapiServlet.registerInterceptor(interceptor);
+		hapiServlet.registerInterceptor(new ResponseHighlighterInterceptor() {
+			@Override
+			public void capabilityStatementGenerated(RequestDetails theRequestDetails, IBaseConformance theCapabilityStatement) {
+				if (theCapabilityStatement instanceof CapabilityStatement statement) {
+					statement.setPublisherElement(new StringType("SNOMED International"));
+					statement.setFormat(new ArrayList<>());
+					statement.addFormat(Constants.CT_FHIR_JSON_NEW);
+					statement.addFormat(Constants.CT_FHIR_XML_NEW);
+					super.capabilityStatementGenerated(theRequestDetails, theCapabilityStatement);
+				}
+			}
+		});
+
 
 		return servletRegistrationBean;
 	}
