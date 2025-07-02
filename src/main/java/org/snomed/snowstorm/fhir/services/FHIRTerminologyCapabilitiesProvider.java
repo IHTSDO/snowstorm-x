@@ -26,18 +26,13 @@ import java.util.Date;
 public class FHIRTerminologyCapabilitiesProvider extends ServerCapabilityStatementProvider {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	public FHIRTerminologyCapabilitiesProvider(RestfulServer theServer) {
+	private final BuildProperties buildProperties;
+	private final FHIRCodeSystemService codeSystemService;
+
+	public FHIRTerminologyCapabilitiesProvider(RestfulServer theServer, BuildProperties buildProperties, FHIRCodeSystemService codeSystemService) {
 		super(theServer);
 		this.buildProperties = buildProperties;
 		this.codeSystemService = codeSystemService;
-	}
-
-	public FHIRTerminologyCapabilitiesProvider(FhirContext theContext, RestfulServerConfiguration theServerConfiguration) {
-		super(theContext, theServerConfiguration);
-	}
-
-	public FHIRTerminologyCapabilitiesProvider(RestfulServer theRestfulServer, ISearchParamRegistry theSearchParamRegistry, IValidationSupport theValidationSupport) {
-		super(theRestfulServer, theSearchParamRegistry, theValidationSupport);
 	}
 
 	@Metadata(cacheMillis = 0)

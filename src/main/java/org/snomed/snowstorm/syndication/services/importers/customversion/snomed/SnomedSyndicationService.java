@@ -60,7 +60,7 @@ public class SnomedSyndicationService extends SyndicationService {
 
     private static final String DEFAULT_VALUE = "empty";
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private String releaseUri;
 
     @Override
     protected List<File> fetchTerminologyPackages(SyndicationImportParams params) throws ServiceException, IOException {
