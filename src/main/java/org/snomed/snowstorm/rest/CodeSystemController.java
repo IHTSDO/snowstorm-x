@@ -75,12 +75,16 @@ public class CodeSystemController {
 
 	@Operation(summary = "Create a code system",
 			description = """
-                    Required fields are shortName and branch.
-                    shortName should use format SNOMEDCT-XX where XX is the country code for national extensions.
-                    dependantVersion uses effectiveTime format and can be used if the new code system depends on an older version of the parent code system, otherwise the latest version will be selected automatically.
-                    defaultLanguageCode can be used to force the sort order of the languages listed under the codesystem, otherwise these are sorted by the number of active translated terms.
-                    maintainerType has no effect on API behaviour but can be used in frontend applications for extension categorisation.
-                    defaultLanguageReferenceSet has no effect API behaviour but can be used by browsers to reflect extension preferences.\s""")
+					Required fields are **shortName** and **branchPath**.
+					- **shortName** should use format SNOMEDCT for the root Edition or SNOMEDCT-XX where XX is the country code for national extensions.
+					- **branchPath** should be "MAIN" for the root Edition, or use format MAIN/SNOMEDCT-XX using the shortName.
+					- **dependantVersion** uses effectiveTime format and can be used if the new code system depends on an older version of the parent code system,
+					otherwise the latest version will be selected automatically.
+					- **defaultLanguageCode** can be used to force the sort order of the languages listed under the codesystem,
+					otherwise these are sorted by the number of active translated terms.
+					- **maintainerType** has no effect on API behaviour but can be used in frontend applications for extension categorisation.
+					- **defaultLanguageReferenceSet** has no effect API behaviour but can be used by browsers to reflect extension preferences.
+					- **postcoordinationLevel** should be set to 0 unless creating a Postcoordinated Expression Repository.""")
 	@PostMapping
 	@PreAuthorize("hasPermission('ADMIN', #codeSystem.branchPath)")
 	public ResponseEntity<Void> createCodeSystem(@RequestBody CodeSystemCreate codeSystem) {
