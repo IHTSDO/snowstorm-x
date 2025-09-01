@@ -9,7 +9,7 @@ import org.snomed.snowstorm.core.data.services.postcoordination.model.Comparable
 import org.snomed.snowstorm.core.data.services.postcoordination.model.ComparableAttributeGroup;
 import org.snomed.snowstorm.core.data.services.postcoordination.model.ComparableExpression;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -22,8 +22,8 @@ public class ExpressionAxiomConversionService {
 
 	private final LocalRandomIdentifierSource identifierSource;
 
-	public ExpressionAxiomConversionService(@Autowired ElasticsearchRestTemplate elasticsearchRestTemplate) {
-		identifierSource = new LocalRandomIdentifierSource(elasticsearchRestTemplate);
+	public ExpressionAxiomConversionService(@Autowired ElasticsearchOperations elasticsearchOperations) {
+		identifierSource = new LocalRandomIdentifierSource(elasticsearchOperations);
 	}
 
 	public Set<AxiomRepresentation> assignExpressionIdsAndConvertToAxioms(ComparableExpression classifiableForm) {
