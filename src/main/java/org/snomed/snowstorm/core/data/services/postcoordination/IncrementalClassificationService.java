@@ -66,7 +66,7 @@ public class IncrementalClassificationService {
 		final RelationshipChangeProcessor changeProcessor;
 		try {
 			changeProcessor = classify(axioms);
-		} catch (IOException | ReasonerServiceException e) {
+		} catch (ReasonerServiceException e) {
 			throw new ServiceException("Failed to classify expression.", e);
 		}
 		final Map<Long, Set<Relationship>> addedStatements = changeProcessor.getAddedStatements();
@@ -135,9 +135,8 @@ public class IncrementalClassificationService {
 		return map;
 	}
 
-	private RelationshipChangeProcessor classify(Set<AxiomRepresentation> axioms) throws IOException, ReasonerServiceException {
-		final ClassificationContainer classificationContainer = setupContainer();
-		return snomedReasonerService.classifyAxioms(axioms, classificationContainer);
+	private RelationshipChangeProcessor classify(Set<AxiomRepresentation> axioms) throws ReasonerServiceException {
+		return snomedReasonerService.classifyTransientAxioms(axioms, true, setupContainer());
 	}
 
 	private synchronized ClassificationContainer setupContainer() throws ReasonerServiceException {
