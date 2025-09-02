@@ -482,31 +482,31 @@ public class QueryService implements ApplicationContextAware {
 		}
 		Set<String> parents = relationshipSummary.remove(Concepts.ISA);
 		// Semantic index query
-		Query query = bool(bq -> bq
+		final BoolQuery.Builder conceptClauses = bool()
 				.must(branchCriteria.getEntityBranchCriteria(QueryConcept.class))
-				.must(termQuery(QueryConcept.Fields.STATED, false)));
+				.must(termQuery(QueryConcept.Fields.STATED, false));
 		for (String parent : parents) {
-			bool(bq -> bq.must(termQuery(QueryConcept.Fields.PARENTS, parent)));
+			conceptClauses.must(termQuery(QueryConcept.Fields.PARENTS, parent));
 		}
 		for (Map.Entry<String, Set<String>> entry : relationshipSummary.entrySet()) {
 			for (String value : entry.getValue()) {
-				bool(bq -> bq.must(termQuery(QueryConcept.Fields.getAttributePath(entry.getKey()), value)));
+				conceptClauses.must(termQuery(QueryConcept.Fields.getAttributePath(entry.getKey()), value));
 			}
 		}
 		SortOptions sortOptions = SortOptionsBuilders.script()
 				.script(new Script.Builder()
-						.inline(new InlineScript.Builder().source("doc['attrMap'].value.length()").build())
+						.inline(new InlineScript.Builder().source("doc.attrMap.value.length()").build())
 						.build())
 				.type(ScriptSortType.Number)   // sort as number
 				.order(SortOrder.Asc)
 				.build()
 				._toSortOptions();
-		NativeQuery searchQuery = NativeQuery.builder()
-				.withQuery(query)
+		NativeQueryBuilder searchQuery = NativeQuery.builder()
+				.withQuery(conceptClauses.build()._toQuery())
 				.withPageable(PageRequest.of(0, 1))
-				.withSort(sortOptions)
-				.build();
-		SearchHits<QueryConcept> searchHits = elasticsearchOperations.search(searchQuery, QueryConcept.class);
+				.withSort(sortOptions);
+
+		SearchHits<QueryConcept> searchHits = elasticsearchOperations.search(searchQuery.build(), QueryConcept.class);
 
 		if (searchHits.hasSearchHits()) {
 			QueryConcept semanticIndexConcept = searchHits.getSearchHit(0).getContent();

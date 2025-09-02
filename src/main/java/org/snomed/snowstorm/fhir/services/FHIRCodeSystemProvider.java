@@ -490,6 +490,9 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 			if (displayOut != null) {
 				parameters.addParameter("display", displayOut);
 			}
+			if (concept != null) {
+				parameters.addParameter("inactive", !concept.isActive());
+			}
 			parameters.addParameter("system", codeSystemVersion.getUrl());
 			parameters.addParameter("version", codeSystemVersion.getVersion());
 			return parameters;
