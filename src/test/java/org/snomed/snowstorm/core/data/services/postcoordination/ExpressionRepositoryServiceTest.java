@@ -5,8 +5,6 @@ import io.kaicode.elasticvc.domain.Branch;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.snomed.snowstorm.core.data.domain.Concept;
 import org.snomed.snowstorm.core.data.domain.ReferenceSetMember;
 import org.snomed.snowstorm.core.data.domain.Relationship;
