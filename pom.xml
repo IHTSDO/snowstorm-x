@@ -17,6 +17,17 @@
 		<packageName>${project.artifactId}</packageName>
 
 		<commons-io.version>2.21.0</commons-io.version>
+		<!-- BOM Override -->
+		<!-- Version overrides, usually for CVE fixes -->
+		<!-- These must be reviewed after each BOM upgrade -->
+		<spring.version>6.2.10</spring.version>
+		<spring-boot.version>3.5.5</spring-boot.version>
+		<spring-cloud.version>2025.0.0</spring-cloud.version>
+		<fhir_core_version>6.4.0</fhir_core_version>
+		<jena_version>5.5.0</jena_version>
+		<icu4j.version>77.1</icu4j.version>
+		<tomcat-embed.version>11.0.10</tomcat-embed.version>
+		<activemq.version>6.1.7</activemq.version>
 
 		<!--
 		Current Elasticsearch _Server_ version is 8.11.1
@@ -157,6 +168,10 @@
 					<groupId>org.testcontainers</groupId>
 					<artifactId>junit-jupiter</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>io.grpc</groupId>
+					<artifactId>grpc-context</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -178,14 +193,20 @@
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
 			<artifactId>hapi-fhir-structures-r4</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>com.ibm.icu</groupId>
+					<artifactId>icu4j</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
 			<artifactId>hapi-fhir-server</artifactId>
 			<exclusions>
 				<exclusion>
-					<groupId>org.eclipse.angus</groupId>
-					<artifactId>angus-mail</artifactId>
+					<groupId>org.simplejavamail</groupId>
+					<artifactId>simple-java-mail</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -193,6 +214,10 @@
 			<groupId>ca.uhn.hapi.fhir</groupId>
 			<artifactId>hapi-fhir-jpaserver-base</artifactId>
 			<exclusions>
+				<exclusion>
+					<groupId>org.xerial</groupId>
+					<artifactId>sqlite-jdbc</artifactId>
+				</exclusion>
 				<exclusion>
 					<groupId>ca.uhn.hapi.fhir</groupId>
 					<artifactId>hapi-fhir-sql-migrate</artifactId>
@@ -344,8 +369,8 @@
 	<build>
 		<plugins>
 			<!--
-               Add the Add-Opens to the manifest file to allow snomed-owl-toolkit to work with java 17. Remove this when the owl-api is updated to use version 5
-           -->
+			   Add the Add-Opens to the manifest file to allow snomed-owl-toolkit to work with java 17. Remove this when the owl-api is updated to use version 5
+		   -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -436,7 +461,6 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>${jacoco-maven-plugin.version}</version>
 				<executions>
 					<execution>
 						<goals>
@@ -525,7 +549,6 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
-						<version>${maven-surefire-plugin.version}</version>
 						<configuration>
 							<excludes>
 								<exclude>TraceabilityLogServiceTest</exclude>
