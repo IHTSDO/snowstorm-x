@@ -9,7 +9,6 @@ import io.kaicode.elasticvc.api.BranchService;
 import io.kaicode.elasticvc.api.PathUtil;
 import io.kaicode.elasticvc.api.VersionControlHelper;
 import io.kaicode.elasticvc.domain.Branch;
-import io.kaicode.elasticvc.domain.Commit;
 import io.kaicode.elasticvc.domain.Metadata;
 import org.apache.activemq.command.ActiveMQTopic;
 import org.modelmapper.ModelMapper;

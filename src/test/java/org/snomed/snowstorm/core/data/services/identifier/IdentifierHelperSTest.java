@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class IdentifierHelperSTest {
 
 	@Test
-	public void testGetNamespaceFromSCTID() {
+	void testGetNamespaceFromSCTID() {
 		assertEquals(0, IdentifierHelperS.getNamespaceFromSCTID("404684003"));
 		assertEquals(0, IdentifierHelperS.getNamespaceFromSCTID("2148514019"));
 		assertEquals(1000202, IdentifierHelperS.getNamespaceFromSCTID("17561000202107"));

@@ -205,7 +205,7 @@ public class FHIRConceptMapService {
 
 		// Grab generated snomed maps
 		maps.addAll(getSnomedMaps().stream()
-				.filter(map -> snomedPredicates.stream().allMatch(predicate -> predicate.test(map))).collect(Collectors.toList()));
+				.filter(map -> snomedPredicates.stream().allMatch(predicate -> predicate.test(map))).toList());
 
 		return maps;
 	}

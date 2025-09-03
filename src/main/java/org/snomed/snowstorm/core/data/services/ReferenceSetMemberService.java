@@ -149,7 +149,7 @@ public class ReferenceSetMemberService extends ComponentService {
 		query.setTrackTotalHits(true);
 		updateQueryWithSearchAfter(query, pageRequest);
 		SearchHits<ReferenceSetMember> searchHits = elasticsearchOperations.search(query, ReferenceSetMember.class);
-		PageImpl<ReferenceSetMember> referenceSetMembers = new PageImpl<>(searchHits.get().map(SearchHit::getContent).collect(Collectors.toList()), query.getPageable(), searchHits.getTotalHits());
+		PageImpl<ReferenceSetMember> referenceSetMembers = new PageImpl<>(searchHits.get().map(SearchHit::getContent).toList(), query.getPageable(), searchHits.getTotalHits());
 		if (searchRequest.isIncludeNonSnomedMapTerms()) {
 			joinMapTargetTerms(referenceSetMembers.getContent());
 		}
@@ -182,7 +182,7 @@ public class ReferenceSetMemberService extends ComponentService {
 	public Page<ReferenceSetMember> findMembers(BranchCriteria branchCriteria, MemberSearchRequest searchRequest, PageRequest pageRequest) {
 		NativeQuery query = new NativeQueryBuilder().withQuery(buildMemberQuery(searchRequest, branchCriteria)).withPageable(pageRequest).build();
 		SearchHits<ReferenceSetMember> searchHits = elasticsearchOperations.search(query, ReferenceSetMember.class);
-		return new PageImpl<>(searchHits.get().map(SearchHit::getContent).collect(Collectors.toList()), pageRequest, searchHits.getTotalHits());
+		return new PageImpl<>(searchHits.get().map(SearchHit::getContent).toList(), pageRequest, searchHits.getTotalHits());
 	}
 
 	private Query buildMemberQuery(MemberSearchRequest searchRequest, BranchCriteria branchCriteria) {

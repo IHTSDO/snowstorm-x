@@ -6,9 +6,9 @@ import org.hl7.fhir.r4.model.*;
 
 public class FHIRProperty {
 
-	public static final String STRING = "STRING";
-	public static final String CODING = "CODING";
-	public static final String CODE = "CODE";
+	public static final String STRING_TYPE = "STRING";
+	public static final String CODING_TYPE = "CODING";
+	public static final String CODE_TYPE = "CODE";
 
 	private String code;
 	private String display;
@@ -30,7 +30,7 @@ public class FHIRProperty {
 		display = property.getDisplay();
 		value = property.getValue();
 		TermConceptPropertyTypeEnum enumType = property.getType();
-		type = enumType != null ? enumType.name() : CODING;
+		type = enumType != null ? enumType.name() : CODING_TYPE;
 	}
 
 	public FHIRProperty(CodeSystem.ConceptPropertyComponent propertyComponent) {
@@ -39,22 +39,22 @@ public class FHIRProperty {
 			Coding valueCoding = propertyComponent.getValueCoding();
 			value = valueCoding.getCode();
 			display = valueCoding.getDisplay();
-			type = CODING;
+			type = CODING_TYPE;
 		} else if (propertyComponent.hasValueCodeType()) {
 			value = propertyComponent.getValueCodeType().getValue();
-			type = CODE;
+			type = CODE_TYPE;
 		} else if (propertyComponent.hasValueStringType()) {
 			value = propertyComponent.getValueStringType().getValue();
-			type = STRING;
+			type = STRING_TYPE;
 		}
 	}
 
 	public Type toHapiValue(String systemVersionUrl) {
-		if (STRING.equals(type)) {
+		if (STRING_TYPE.equals(type)) {
 			return new StringType(value);
-		} else if (CODE.equals(type)) {
+		} else if (CODE_TYPE.equals(type)) {
 			return new CodeType(value);
-		} else if (CODING.equals(type)) {
+		} else if (CODING_TYPE.equals(type)) {
 			return new Coding(systemVersionUrl, value, display);
 		}
 		return null;

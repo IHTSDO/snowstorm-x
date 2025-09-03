@@ -33,14 +33,11 @@ public class FHIRConceptMapProvider implements IResourceProvider, FHIRConstants 
 	@Value("${snowstorm.rest-api.readonly}")
 	private boolean readOnlyMode;
 
-	@Autowired
-	private FHIRConceptMapService service;
+	private final FHIRConceptMapService service;
 
-	@Autowired
-	private FHIRConceptMapRepository conceptMapRepository;
-
-	@Autowired
-	private FHIRMapElementRepository mapElementRepository;
+	public FHIRConceptMapProvider(FHIRConceptMapService service) {
+		this.service = service;
+	}
 
 	@Read
 	public ConceptMap getConceptMap(@IdParam IdType id) {

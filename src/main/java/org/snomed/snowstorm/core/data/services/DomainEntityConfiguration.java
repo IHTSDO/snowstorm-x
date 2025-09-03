@@ -1,38 +1,24 @@
 package org.snomed.snowstorm.core.data.services;
 
 import io.kaicode.elasticvc.domain.DomainEntity;
+import jakarta.annotation.PostConstruct;
 import org.snomed.snowstorm.core.data.domain.*;
 import org.snomed.snowstorm.core.data.repositories.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.util.*;
 
 @Service
 public class DomainEntityConfiguration {
 
-	@Autowired
-	private ConceptRepository conceptRepository;
-
-	@Autowired
-	private DescriptionRepository descriptionRepository;
-
-	@Autowired
-	private RelationshipRepository relationshipRepository;
-
-	@Autowired
-	private IdentifierRepository identifierRepository;
-
-	@Autowired
-	private ReferenceSetMemberRepository referenceSetMemberRepository;
-
-	@Autowired
-	private QueryConceptRepository queryConceptRepository;
-
-	@Autowired
-	private ReferencedConceptsLookupRepository referencedConceptsLookupRepository;
+	private final ConceptRepository conceptRepository;
+	private final DescriptionRepository descriptionRepository;
+	private final RelationshipRepository relationshipRepository;
+	private final IdentifierRepository identifierRepository;
+	private final ReferenceSetMemberRepository referenceSetMemberRepository;
+	private final QueryConceptRepository queryConceptRepository;
+	private final ReferencedConceptsLookupRepository referencedConceptsLookupRepository;
 
 	private Map<Class<? extends SnomedComponent<?>>, ElasticsearchRepository> componentTypeRepositoryMap;
 	private Map<Class<? extends DomainEntity>, ElasticsearchRepository> allTypeRepositoryMap;
@@ -41,6 +27,19 @@ public class DomainEntityConfiguration {
 	private Map<Class<? extends DomainEntity>, String> allIdFields;
 
 	private Set<Class<? extends DomainEntity<?>>> entityTypesToSkipVersionControl;
+
+	public DomainEntityConfiguration(ConceptRepository conceptRepository, DescriptionRepository descriptionRepository, RelationshipRepository relationshipRepository,
+			IdentifierRepository identifierRepository, ReferenceSetMemberRepository referenceSetMemberRepository, QueryConceptRepository queryConceptRepository,
+			ReferencedConceptsLookupRepository referencedConceptsLookupRepository) {
+
+		this.conceptRepository = conceptRepository;
+		this.descriptionRepository = descriptionRepository;
+		this.relationshipRepository = relationshipRepository;
+		this.identifierRepository = identifierRepository;
+		this.referenceSetMemberRepository = referenceSetMemberRepository;
+		this.queryConceptRepository = queryConceptRepository;
+		this.referencedConceptsLookupRepository = referencedConceptsLookupRepository;
+	}
 
 	@PostConstruct
 	public void init() {
