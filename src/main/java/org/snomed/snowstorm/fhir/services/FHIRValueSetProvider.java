@@ -51,7 +51,7 @@ public class FHIRValueSetProvider implements IResourceProvider, FHIRConstants {
 	@Autowired
 	private FHIRHelper fhirHelper;
 
-	public static int DEFAULT_PAGESIZE = 1_000;
+	public final static int DEFAULT_PAGESIZE = 1_000;
 
 	@Read
 	public ValueSet getValueSet(@IdParam IdType id) {
@@ -311,12 +311,6 @@ public class FHIRValueSetProvider implements IResourceProvider, FHIRConstants {
 
 	private void validateCodeParamHints(String incorrectParamSystemVersion) {
 		FHIRHelper.parameterNamingHint("system-version", incorrectParamSystemVersion, "systemVersion");
-	}
-
-	private void validateId(IdType id, ValueSet vs) {
-		if (vs.getId() == null || !id.asStringValue().equals(vs.getId())) {
-			throw exception("ID in request must match that in ValueSet object", IssueType.EXCEPTION, 400);
-		}
 	}
 
 	@Override

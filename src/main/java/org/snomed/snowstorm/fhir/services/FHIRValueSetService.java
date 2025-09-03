@@ -66,9 +66,9 @@ public class FHIRValueSetService {
 	// Constant to help with "?fhir_vs=refset"
 	public static final String REFSETS_WITH_MEMBERS = "Refsets";
 
+	private static final String MESSAGE = "message";
 	private static final PageRequest PAGE_OF_ONE = PageRequest.of(0, 1);
-
-	private static List<Long> defaultSearchDescTypeIds = List.of(Concepts.FSN_L, Concepts.SYNONYM_L);
+	private static final List<Long> defaultSearchDescTypeIds = List.of(Concepts.FSN_L, Concepts.SYNONYM_L);
 
 	@Autowired
 	private FHIRCodeSystemService codeSystemService;
@@ -596,7 +596,7 @@ public class FHIRValueSetService {
 			Set<FHIRCodeSystemVersion> codeSystemVersionsForExpansion = codeSelectionCriteria.gatherAllInclusionVersions();
 			List<FHIRCodeSystemVersion> includeVersionsToExcludeFrom = codeSystemVersionsForExpansion.stream().filter(includeVersion ->
 					includeVersion.getUrl().equals(exclude.getSystem()) && (exclude.getVersion() == null || exclude.getVersion().equals(includeVersion.getVersion()))
-			).collect(Collectors.toList());
+			).toList();
 
 			for (FHIRCodeSystemVersion codeSystemVersion : includeVersionsToExcludeFrom) {
 				collectConstraints(exclude, codeSystemVersion, codeSelectionCriteria.addExclusion(codeSystemVersion), activeOnly);
@@ -671,16 +671,16 @@ public class FHIRValueSetService {
 			if (systemMatch) {
 				if (codings.size() == 1) {
 					Coding codingA = codings.iterator().next();
-					response.addParameter("message", format("The system '%s' is included in this ValueSet but the version '%s' is not.", codingA.getSystem(), codingA.getVersion()));
+					response.addParameter(MESSAGE, format("The system '%s' is included in this ValueSet but the version '%s' is not.", codingA.getSystem(), codingA.getVersion()));
 				} else {
-					response.addParameter("message", "One or more codes in the CodableConcept are within a system included by this ValueSet but none of the versions match.");
+					response.addParameter(MESSAGE, "One or more codes in the CodableConcept are within a system included by this ValueSet but none of the versions match.");
 				}
 			} else {
 				if (codings.size() == 1) {
 					Coding codingA = codings.iterator().next();
-					response.addParameter("message", format("The system '%s' is not included in this ValueSet.", codingA.getSystem()));
+					response.addParameter(MESSAGE, format("The system '%s' is not included in this ValueSet.", codingA.getSystem()));
 				} else {
-					response.addParameter("message", "None of the codes in the CodableConcept are within a system included by this ValueSet.");
+					response.addParameter(MESSAGE, "None of the codes in the CodableConcept are within a system included by this ValueSet.");
 				}
 			}
 			return response;
@@ -709,7 +709,7 @@ public class FHIRValueSetService {
 							if (designation.getLanguage() == null || languageDialects.isEmpty() || languageDialects.stream()
 										.anyMatch(languageDialect -> designation.getLanguage().equals(languageDialect.getLanguageCode()))) {
 								response.addParameter("result", true);
-								response.addParameter("message", format("The code '%s' was found in the ValueSet and the display matched one of the designations.",
+								response.addParameter(MESSAGE, format("The code '%s' was found in the ValueSet and the display matched one of the designations.",
 										codingA.getCode()));
 								return response;
 							}
@@ -717,13 +717,13 @@ public class FHIRValueSetService {
 					}
 					if (termMatch != null) {
 						response.addParameter("result", false);
-						response.addParameter("message", format("The code '%s' was found in the ValueSet and the display matched the designation with term '%s', " +
+						response.addParameter(MESSAGE, format("The code '%s' was found in the ValueSet and the display matched the designation with term '%s', " +
 								"however the language of the designation '%s' did not match any of the languages in the requested display language '%s'.",
 								codingA.getCode(), termMatch.getValue(), termMatch.getLanguage(), displayLanguage));
 						return response;
 					} else {
 						response.addParameter("result", false);
-						response.addParameter("message", format("The code '%s' was found in the ValueSet, however the display '%s' did not match any designations.",
+						response.addParameter(MESSAGE, format("The code '%s' was found in the ValueSet, however the display '%s' did not match any designations.",
 								codingA.getCode(), codingA.getDisplay()));
 						return response;
 					}
@@ -735,10 +735,10 @@ public class FHIRValueSetService {
 		if (codings.size() == 1) {
 			Coding codingA = codings.iterator().next();
 			String codingAVersion = codingA.getVersion();
-			response.addParameter("message", format("The code '%s' from CodeSystem '%s'%s was not found in this ValueSet.", codingA.getCode(), codingA.getSystem(),
+			response.addParameter(MESSAGE, format("The code '%s' from CodeSystem '%s'%s was not found in this ValueSet.", codingA.getCode(), codingA.getSystem(),
 					codingAVersion != null ? format(" version '%s'", codingAVersion) : ""));
 		} else {
-			response.addParameter("message", "None of the codes in the CodableConcept were found in this ValueSet.");
+			response.addParameter(MESSAGE, "None of the codes in the CodableConcept were found in this ValueSet.");
 		}
 		return response;
 	}
@@ -829,13 +829,13 @@ public class FHIRValueSetService {
 	private String inclusionExclusionClausesToEcl(CodeSelectionCriteria codeSelectionCriteria) {
 		StringBuilder ecl = new StringBuilder();
 		for (ConceptConstraint inclusion : codeSelectionCriteria.getInclusionConstraints().values().iterator().next()) {
-			if (ecl.length() > 0) {
+			if (!ecl.isEmpty()) {
 				ecl.append(" OR ");
 			}
 			ecl.append("( ").append(toEcl(inclusion)).append(" )");
 		}
 
-		if (ecl.length() == 0) {
+		if (ecl.isEmpty()) {
 			// This may be impossible because ValueSet.compose.include cardinality is 1..*
 			ecl.append("*");
 		}
@@ -879,111 +879,123 @@ public class FHIRValueSetService {
 		}
 		if (!include.getFilter().isEmpty()) {
 			for (ValueSet.ConceptSetFilterComponent filter : include.getFilter()) {
-				String property = filter.getProperty();
-				ValueSet.FilterOperator op = filter.getOp();
-				String value = filter.getValue();
-				if (codeSystemVersion.isOnSnomedBranch()) {
-					// SNOMED CT filters:
-					// concept, is-a, [conceptId]
-					// concept, in, [refset]
-					// constraint, =, [ECL]
-					// expression, =, Refsets - special case to deal with '?fhir_vs=refset'. Matches the Ontoserver compose for these, not part of the spec but at least consistent.
-					// expressions, =, true/false
-					if ("concept".equals(property)) {
-						if (op == ValueSet.FilterOperator.ISA) {
-							if (Strings.isNullOrEmpty(value)) {
-								throw exception("Value missing for SNOMED CT ValueSet concept 'is-a' filter", OperationOutcome.IssueType.INVALID, 400);
-							}
-							inclusionConstraints.add(new ConceptConstraint().setEcl("<< " + value));
-						} else if (op == ValueSet.FilterOperator.IN) {
-							if (Strings.isNullOrEmpty(value)) {
-								throw exception("Value missing for SNOMED CT ValueSet concept 'in' filter.", OperationOutcome.IssueType.INVALID, 400);
-							}
-							// Concept must be in the specified refset
-							String ecl = "^ " + value;
-							if (activeOnly) {
-								ecl += " {{ C active=true }}";
-							}
-							inclusionConstraints.add(new ConceptConstraint().setEcl(ecl));
-						} else {
-							throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'concept' filter.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
-						}
-					} else if ("constraint".equals(property)) {
-						if (op == ValueSet.FilterOperator.EQUAL) {
-							if (Strings.isNullOrEmpty(value)) {
-								throw exception("Value missing for SNOMED CT ValueSet 'constraint' filter.", OperationOutcome.IssueType.INVALID, 400);
-							}
-							inclusionConstraints.add(new ConceptConstraint().setEcl(value));
-						} else {
-							throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'constraint' filter.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
-						}
-					} else if ("expression".equals(property)) {
-						if (op == ValueSet.FilterOperator.EQUAL) {
-							if (REFSETS_WITH_MEMBERS.equals(value)) {
-								// Concept must represent a reference set which has members in this code system version.
-								// Lookup uses a cache.
-								inclusionConstraints.add(new ConceptConstraint(findAllRefsetsWithActiveMembers(codeSystemVersion)));
-							} else if (value != null) {
-								inclusionConstraints.add(new ConceptConstraint().setEcl(value));
-							} else {
-								throw exception("Value missing for SNOMED CT ValueSet 'expression' filter.", OperationOutcome.IssueType.INVALID, 400);
-							}
-						} else {
-							throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'expression' filter.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
-						}
-					} else if ("expressions".equals(property)) {
-						if (op == ValueSet.FilterOperator.EQUAL) {
-							if ("true".equalsIgnoreCase(value)) {
-								throw exception("This server does not yet support SNOMED CT ValueSets with expressions.", OperationOutcome.IssueType.INVALID,	400);
-							}// else false, which has no effect.
-						} else {
-							throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'expressions' flag.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
-						}
-					} else if ("parent".equals(property)) {
-						if (op == ValueSet.FilterOperator.EQUAL) {
-							inclusionConstraints.add(new ConceptConstraint().setEcl("<! " + value));
-						} else {
-							throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'parent' filter.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
-						}
-					} else {
-						throw exception(format("Unexpected property '%s' for SNOMED CT ValueSet filter.", property), OperationOutcome.IssueType.INVALID, 400);
-					}
-				} else if (codeSystemVersion.getUrl().equals("http://loinc.org")) {
-					// LOINC filters:
-					// parent/ancestor, =/in, [partCode]
-					// [property], =/regex, [value] - not supported
-					// copyright, =, LOINC/3rdParty - not supported
-
-					if (Strings.isNullOrEmpty(value)) {
-						throw exception("Value missing for LOINC ValueSet filter", OperationOutcome.IssueType.INVALID, 400);
-					}
-					Set<String> values = op == ValueSet.FilterOperator.IN ? new HashSet<>(Arrays.asList(value.split(","))) : Collections.singleton(value);
-					if ("parent".equals(property)) {
-						inclusionConstraints.add(new ConceptConstraint().setParent(values));
-					} else if ("ancestor".equals(property)) {
-						inclusionConstraints.add(new ConceptConstraint().setAncestor(values));
-					} else {
-						throw exception(format("This server does not support ValueSet filter using LOINC property '%s'. " +
-								"Only parent and ancestor filters are supported for LOINC.", property), OperationOutcome.IssueType.NOTSUPPORTED, 400);
-					}
-				} else if (codeSystemVersion.getUrl().startsWith("http://hl7.org/fhir/sid/icd-10")) {
-					// Spec says there are no filters for ICD-9 and 10.
-					throw exception("This server does not expect any ValueSet property filters for ICD-10.", OperationOutcome.IssueType.NOTSUPPORTED, 400);
-				} else {
-					// Generic code system
-					if ("concept".equals(property) && op == ValueSet.FilterOperator.ISA) {
-						Set<String> singleton = Collections.singleton(value);
-						inclusionConstraints.add(new ConceptConstraint(singleton));
-						inclusionConstraints.add(new ConceptConstraint().setAncestor(singleton));
-					} else if ("concept".equals(property) && op == ValueSet.FilterOperator.DESCENDENTOF) {
-						Set<String> singleton = Collections.singleton(value);
-						inclusionConstraints.add(new ConceptConstraint().setAncestor(singleton));
-					} else {
-						throw exception("This server does not support this ValueSet property filter on generic code systems. " +
-								"Supported filters for generic code systems are: (concept, is-a) and (concept, descendant-of).", OperationOutcome.IssueType.NOTSUPPORTED, 400);
-					}
-				}
+				collectFilter(codeSystemVersion, inclusionConstraints, activeOnly, filter);
 			}
+		}
+	}
+
+	private void collectFilter(FHIRCodeSystemVersion codeSystemVersion, Set<ConceptConstraint> inclusionConstraints, boolean activeOnly, ValueSet.ConceptSetFilterComponent filter) {
+		String property = filter.getProperty();
+		ValueSet.FilterOperator op = filter.getOp();
+		String value = filter.getValue();
+		if (codeSystemVersion.isOnSnomedBranch()) {
+			collectSnomedFilter(codeSystemVersion, inclusionConstraints, activeOnly, property, op, value);
+		} else if (codeSystemVersion.getUrl().equals("http://loinc.org")) {
+			collectLoincFilter(inclusionConstraints, value, op, property);
+		} else if (codeSystemVersion.getUrl().startsWith("http://hl7.org/fhir/sid/icd-10")) {
+			// Spec says there are no filters for ICD-9 and 10.
+			throw exception("This server does not expect any ValueSet property filters for ICD-10.", OperationOutcome.IssueType.NOTSUPPORTED, 400);
+		} else {
+			// Generic code system
+			if ("concept".equals(property) && op == ValueSet.FilterOperator.ISA) {
+				Set<String> singleton = Collections.singleton(value);
+				inclusionConstraints.add(new ConceptConstraint(singleton));
+				inclusionConstraints.add(new ConceptConstraint().setAncestor(singleton));
+			} else if ("concept".equals(property) && op == ValueSet.FilterOperator.DESCENDENTOF) {
+				Set<String> singleton = Collections.singleton(value);
+				inclusionConstraints.add(new ConceptConstraint().setAncestor(singleton));
+			} else {
+				throw exception("This server does not support this ValueSet property filter on generic code systems. " +
+						"Supported filters for generic code systems are: (concept, is-a) and (concept, descendant-of).", OperationOutcome.IssueType.NOTSUPPORTED, 400);
+			}
+		}
+	}
+
+	private void collectSnomedFilter(FHIRCodeSystemVersion codeSystemVersion, Set<ConceptConstraint> inclusionConstraints, boolean activeOnly, String property, ValueSet.FilterOperator op, String value) {
+		// SNOMED CT filters:
+		// concept, is-a, [conceptId]
+		// concept, in, [refset]
+		// constraint, =, [ECL]
+		// expression, =, Refsets - special case to deal with '?fhir_vs=refset'. Matches the Ontoserver compose for these, not part of the spec but at least consistent.
+		// expressions, =, true/false
+		if ("concept".equals(property)) {
+			if (op == ValueSet.FilterOperator.ISA) {
+				if (Strings.isNullOrEmpty(value)) {
+					throw exception("Value missing for SNOMED CT ValueSet concept 'is-a' filter", OperationOutcome.IssueType.INVALID, 400);
+				}
+				inclusionConstraints.add(new ConceptConstraint().setEcl("<< " + value));
+			} else if (op == ValueSet.FilterOperator.IN) {
+				if (Strings.isNullOrEmpty(value)) {
+					throw exception("Value missing for SNOMED CT ValueSet concept 'in' filter.", OperationOutcome.IssueType.INVALID, 400);
+				}
+				// Concept must be in the specified refset
+				String ecl = "^ " + value;
+				if (activeOnly) {
+					ecl += " {{ C active=true }}";
+				}
+				inclusionConstraints.add(new ConceptConstraint().setEcl(ecl));
+			} else {
+				throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'concept' filter.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
+			}
+		} else if ("constraint".equals(property)) {
+			if (op == ValueSet.FilterOperator.EQUAL) {
+				if (Strings.isNullOrEmpty(value)) {
+					throw exception("Value missing for SNOMED CT ValueSet 'constraint' filter.", OperationOutcome.IssueType.INVALID, 400);
+				}
+				inclusionConstraints.add(new ConceptConstraint().setEcl(value));
+			} else {
+				throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'constraint' filter.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
+			}
+		} else if ("expression".equals(property)) {
+			if (op == ValueSet.FilterOperator.EQUAL) {
+				if (REFSETS_WITH_MEMBERS.equals(value)) {
+					// Concept must represent a reference set which has members in this code system version.
+					// Lookup uses a cache.
+					inclusionConstraints.add(new ConceptConstraint(findAllRefsetsWithActiveMembers(codeSystemVersion)));
+				} else if (value != null) {
+					inclusionConstraints.add(new ConceptConstraint().setEcl(value));
+				} else {
+					throw exception("Value missing for SNOMED CT ValueSet 'expression' filter.", OperationOutcome.IssueType.INVALID, 400);
+				}
+			} else {
+				throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'expression' filter.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
+			}
+		} else if ("expressions".equals(property)) {
+			if (op == ValueSet.FilterOperator.EQUAL) {
+				if ("true".equalsIgnoreCase(value)) {
+					throw exception("This server does not yet support SNOMED CT ValueSets with expressions.", OperationOutcome.IssueType.INVALID,	400);
+				}// else false, which has no effect.
+			} else {
+				throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'expressions' flag.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
+			}
+		} else if ("parent".equals(property)) {
+			if (op == ValueSet.FilterOperator.EQUAL) {
+				inclusionConstraints.add(new ConceptConstraint().setEcl("<! " + value));
+			} else {
+				throw exception(format("Unexpected operation '%s' for SNOMED CT ValueSet 'parent' filter.", op.toCode()), OperationOutcome.IssueType.INVALID, 400);
+			}
+		} else {
+			throw exception(format("Unexpected property '%s' for SNOMED CT ValueSet filter.", property), OperationOutcome.IssueType.INVALID, 400);
+		}
+	}
+
+	private static void collectLoincFilter(Set<ConceptConstraint> inclusionConstraints, String value, ValueSet.FilterOperator op, String property) {
+		// LOINC filters:
+		// parent/ancestor, =/in, [partCode]
+		// [property], =/regex, [value] - not supported
+		// copyright, =, LOINC/3rdParty - not supported
+
+		if (Strings.isNullOrEmpty(value)) {
+			throw exception("Value missing for LOINC ValueSet filter", OperationOutcome.IssueType.INVALID, 400);
+		}
+		Set<String> values = op == ValueSet.FilterOperator.IN ? new HashSet<>(Arrays.asList(value.split(","))) : Collections.singleton(value);
+		if ("parent".equals(property)) {
+			inclusionConstraints.add(new ConceptConstraint().setParent(values));
+		} else if ("ancestor".equals(property)) {
+			inclusionConstraints.add(new ConceptConstraint().setAncestor(values));
+		} else {
+			throw exception(format("This server does not support ValueSet filter using LOINC property '%s'. " +
+					"Only parent and ancestor filters are supported for LOINC.", property), OperationOutcome.IssueType.NOTSUPPORTED, 400);
 		}
 	}
 
@@ -1057,7 +1069,7 @@ public class FHIRValueSetService {
 		if (bucketPage.getBuckets() != null && bucketPage.getBuckets().containsKey(AGGREGATION_MEMBER_COUNTS_BY_REFERENCE_SET)) {
 			allRefsets = bucketPage.getBuckets().get(AGGREGATION_MEMBER_COUNTS_BY_REFERENCE_SET).keySet().stream()
 					.map(s -> new ConceptMini(s, null))
-					.collect(Collectors.toList());
+					.toList();
 		}
 		Set<String> refsets = allRefsets.stream().map(ConceptMini::getConceptId).collect(Collectors.toSet());
 

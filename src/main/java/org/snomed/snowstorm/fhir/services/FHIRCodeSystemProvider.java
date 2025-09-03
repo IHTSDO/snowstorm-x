@@ -274,8 +274,6 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 			throw exception("Failed to read patch body. The only supported patch operation uses this format: " + EXAMPLE_SNOMEDCT_PATCH, IssueType.INVARIANT, 400);
 		}
 
-		System.out.println();
-
 		if (expressionStrings.isEmpty()) {
 			return new MethodOutcome();
 		}
@@ -383,9 +381,9 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 			FHIRCodeSystemVersion codeSystemVersion = conceptAndSystemResult.getCodeSystemVersion();
 			if (conceptAndSystemResult.getConcept() == null) {
 				if (conceptAndSystemResult.isPostcoordinated()) {
-					throw exception(format("Code '%s' not found for system '%s'.", code, codeSystemVersion.getUrl()), IssueType.NOTFOUND, 404);
+					throw getCodeNotFoundForSystemException(code, codeSystemVersion);
 				}
-				throw exception(format("Code '%s' not found for system '%s'.", code, codeSystemVersion.getUrl()), IssueType.NOTFOUND, 404);
+				throw getCodeNotFoundForSystemException(code, codeSystemVersion);
 			}
 
 			List<String> childIds = conceptAndSystemResult.isPostcoordinated() ? Collections.emptyList() : graphService.findChildren(code, codeSystemVersion, LARGE_PAGE);
@@ -395,10 +393,14 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 			FHIRCodeSystemVersion fhirCodeSystemVersion = fhirCodeSystemService.findCodeSystemVersionOrThrow(codeSystemParams);
 			FHIRConcept concept = fhirConceptService.findConcept(fhirCodeSystemVersion, code);
 			if (concept == null) {
-				throw exception(format("Code '%s' not found for system '%s'.", code, fhirCodeSystemVersion.getUrl()), IssueType.NOTFOUND, 404);
+				throw getCodeNotFoundForSystemException(code, fhirCodeSystemVersion);
 			}
 			return pMapper.mapToFHIR(fhirCodeSystemVersion, concept);
 		}
+	}
+
+	private static @NotNull SnowstormFHIRServerResponseException getCodeNotFoundForSystemException(String code, FHIRCodeSystemVersion codeSystemVersion) {
+		return exception(format("Code '%s' not found for system '%s'.", code, codeSystemVersion.getUrl()), IssueType.NOTFOUND, 404);
 	}
 
 	@Operation(name="$validate-code", idempotent=true)
