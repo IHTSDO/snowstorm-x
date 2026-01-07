@@ -18,16 +18,9 @@
 
 		<commons-io.version>2.21.0</commons-io.version>
 		<!-- BOM Override -->
-		<!-- Version overrides, usually for CVE fixes -->
-		<!-- These must be reviewed after each BOM upgrade -->
-		<spring.version>6.2.10</spring.version>
-		<spring-boot.version>3.5.5</spring-boot.version>
-		<spring-cloud.version>2025.0.0</spring-cloud.version>
-		<fhir_core_version>6.4.0</fhir_core_version>
-		<jena_version>5.5.0</jena_version>
-		<icu4j.version>77.1</icu4j.version>
-		<tomcat-embed.version>11.0.10</tomcat-embed.version>
-		<activemq.version>6.1.7</activemq.version>
+		<jena_version>4.9.0</jena_version>
+		<!-- CVE Fix -->
+		<spring.version>6.2.12</spring.version>
 
 		<!--
 		Current Elasticsearch _Server_ version is 8.11.1
@@ -488,7 +481,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>${spring-boot.version}</version>
 				<configuration>
 					<mainClass>org.snomed.snowstorm.SnowstormApplication</mainClass>
 				</configuration>
