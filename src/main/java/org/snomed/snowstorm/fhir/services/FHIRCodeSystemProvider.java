@@ -15,6 +15,8 @@ import ca.uhn.fhir.rest.server.IResourceProvider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.hl7.fhir.instance.model.api.IBaseParameters;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.ICompositeType;
@@ -44,10 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -189,7 +188,7 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 		return concat(concat(snomedCodeSystemStream, fhirCodeSystemStream), snomedPostcoordinatedStream)
 				.filter(cs -> csFilter.apply(cs, fhirHelper))
 				.sorted(chainedComparator)
-				.collect(Collectors.toList());
+				.toList();
 	}
 
 	@Read
