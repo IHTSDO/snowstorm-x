@@ -21,6 +21,7 @@
 		<jena_version>4.9.0</jena_version>
 		<!-- CVE Fix -->
 		<spring.version>6.2.12</spring.version>
+		<hapi-fhir.version>8.8.1</hapi-fhir.version>
 
 		<!--
 		Current Elasticsearch _Server_ version is 8.11.1
