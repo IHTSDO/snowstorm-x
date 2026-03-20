@@ -5,7 +5,6 @@ import ca.uhn.fhir.parser.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.OperationOutcome;
@@ -25,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.zip.GZIPInputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -150,7 +150,7 @@ public class FHIRLoadPackageService {
 	}
 
 	private <T> T extractObject(File packageFile, String archiveEntryName, Class<T> clazz, JsonParser jsonParser) throws IOException {
-		try (GzipCompressorInputStream gzipIn = new GzipCompressorInputStream(new FileInputStream(packageFile));
+		try (GZIPInputStream gzipIn = new GZIPInputStream(new FileInputStream(packageFile));
 			 TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn)) {
 
 			ArchiveEntry entry;
