@@ -7,7 +7,6 @@ import ca.uhn.fhir.jpa.term.UploadStatistics;
 import ca.uhn.fhir.jpa.term.api.ITermCodeSystemStorageSvc;
 import ca.uhn.fhir.jpa.term.custom.CustomTerminologySet;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import ca.uhn.fhir.rest.api.server.storage.IResourcePersistentId;
 import org.hl7.fhir.instance.model.api.IIdType;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.ConceptMap;
@@ -49,15 +48,17 @@ public class FHIRTermCodeSystemStorage implements ITermCodeSystemStorageSvc {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
-	public void storeNewCodeSystemVersion(IResourcePersistentId theCodeSystemResourcePid, String theSystemUri, String theSystemName,
-			String theSystemVersionId, TermCodeSystemVersion theCodeSystemVersion, ResourceTable theCodeSystemResourceTable,
-			RequestDetails theRequestDetails) {
+	public void storeNewCodeSystemVersion(String theSystemUri, String theSystemName, String theSystemVersionId, TermCodeSystemVersion theCodeSystemVersion,
+			ResourceTable theCodeSystemResourceTable, RequestDetails theRequestDetails) {
 
+		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 	@Override
-	public void storeNewCodeSystemVersion(IResourcePersistentId theCodeSystemResourcePid, String theSystemUri, String theSystemName, String theSystemVersionId, TermCodeSystemVersion theCodeSystemVersion, ResourceTable theCodeSystemResourceTable) {
-		ITermCodeSystemStorageSvc.super.storeNewCodeSystemVersion(theCodeSystemResourcePid, theSystemUri, theSystemName, theSystemVersionId, theCodeSystemVersion, theCodeSystemResourceTable);
+	public void storeNewCodeSystemVersion(String theSystemUri, String theSystemName, String theSystemVersionId, TermCodeSystemVersion theCodeSystemVersion,
+			ResourceTable theCodeSystemResourceTable) {
+
+		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 	@Override
@@ -98,21 +99,27 @@ public class FHIRTermCodeSystemStorage implements ITermCodeSystemStorageSvc {
 
 	@Override
 	public void storeNewCodeSystemVersionIfNeeded(CodeSystem codeSystem, ResourceTable resourceTable, RequestDetails requestDetails) {
+		throw new UnsupportedOperationException("Not implemented.");
+	}
+
+	@Override
+	public void storeNewCodeSystemVersionIfNeeded(CodeSystem theCodeSystem, ResourceTable theResourceEntity) {
+		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 	@Override
 	public UploadStatistics applyDeltaCodeSystemsAdd(String s, CustomTerminologySet customTerminologySet) {
-		return null;
+		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 	@Override
 	public UploadStatistics applyDeltaCodeSystemsRemove(String s, CustomTerminologySet customTerminologySet) {
-		return null;
+		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 	@Override
 	public int saveConcept(TermConcept termConcept) {
-		return 0;
+		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 }
