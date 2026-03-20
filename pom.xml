@@ -19,11 +19,9 @@
 		<!-- MUST be checked after every BOM upgrade! -->
 		<activemq.version>6.2.1</activemq.version>
 		<hapi-fhir.version>8.8.1</hapi-fhir.version>
+		<fhir_core_version>6.9.1</fhir_core_version>
 
-		<!--
-		Current Elasticsearch _Server_ version is 8.11.1
-		N.B. Remember to keep TestConfig.ELASTIC_SEARCH_SERVER_VERSION and getting-started guide updated.
-		-->
+		<!-- Docker -->
 		<docker.registry>docker.io</docker.registry>
 		<docker.allowInsecureRegistries>false</docker.allowInsecureRegistries>
 		<docker.image.prefix>snomedinternational</docker.image.prefix>
@@ -222,6 +220,26 @@
 					<artifactId>hapi-fhir-sql-migrate</artifactId>
 				</exclusion>
 				<exclusion>
+					<groupId>ca.uhn.hapi.fhir</groupId>
+					<artifactId>org.hl7.fhir.r5</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ca.uhn.hapi.fhir</groupId>
+					<artifactId>hapi-fhir-structures-dstu2</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ca.uhn.hapi.fhir</groupId>
+					<artifactId>hapi-fhir-structures-dstu3</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ca.uhn.hapi.fhir</groupId>
+					<artifactId>hapi-fhir-structures-r4b</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ca.uhn.hapi.fhir</groupId>
+					<artifactId>hapi-fhir-structures-hl7org-dstu2</artifactId>
+				</exclusion>
+				<exclusion>
 					<groupId>org.elasticsearch.client</groupId>
 					<artifactId>elasticsearch-rest-high-level-client</artifactId>
 				</exclusion>
@@ -263,6 +281,14 @@
 				<exclusion>
 					<groupId>org.hibernate</groupId>
 					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ca.uhn.hapi.fhir</groupId>
+					<artifactId>hapi-fhir-structures-dstu3</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>ca.uhn.hapi.fhir</groupId>
+					<artifactId>hapi-fhir-structures-hl7org-dstu2</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -362,6 +388,26 @@
 				<version>${spring-cloud.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>ca.uhn.hapi.fhir</groupId>
+				<artifactId>org.hl7.fhir.utilities</artifactId>
+				<version>${fhir_core_version}</version>
+			</dependency>
+			<dependency>
+				<groupId>ca.uhn.hapi.fhir</groupId>
+				<artifactId>org.hl7.fhir.r4</artifactId>
+				<version>${fhir_core_version}</version>
+			</dependency>
+			<dependency>
+				<groupId>ca.uhn.hapi.fhir</groupId>
+				<artifactId>org.hl7.fhir.convertors</artifactId>
+				<version>${fhir_core_version}</version>
+			</dependency>
+			<dependency>
+				<groupId>ca.uhn.hapi.fhir</groupId>
+				<artifactId>org.hl7.fhir.validation</artifactId>
+				<version>${fhir_core_version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
