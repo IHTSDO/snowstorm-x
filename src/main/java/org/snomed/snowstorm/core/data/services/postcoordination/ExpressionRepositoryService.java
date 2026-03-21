@@ -1,13 +1,13 @@
 package org.snomed.snowstorm.core.data.services.postcoordination;
 
 import ch.qos.logback.classic.Level;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import io.kaicode.elasticvc.api.BranchCriteria;
 import io.kaicode.elasticvc.api.BranchService;
 import io.kaicode.elasticvc.api.VersionControlHelper;
 import io.kaicode.elasticvc.domain.Branch;
 import io.kaicode.elasticvc.domain.Commit;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snomed.languages.scg.domain.model.Attribute;
@@ -147,7 +147,7 @@ public class ExpressionRepositoryService {
 				Map<String, String> expressionIdCache = new HashMap<>();
 
 				String equivalentConceptAssociationRefset = commit.getBranch().getMetadata().getString(EXPRESSION_EQUIVALENT_CONCEPTS_ASSOCIATION_METADATA_KEY);
-				if (Strings.isBlank(equivalentConceptAssociationRefset)) {
+				if (Strings.isNullOrEmpty(equivalentConceptAssociationRefset)) {
 					logger.error("Not able to persist equivalent concept associations on {} because branch metadata item {} is missing.",
 							branch, EXPRESSION_EQUIVALENT_CONCEPTS_ASSOCIATION_METADATA_KEY);
 					equivalentConceptAssociationRefset = null;
@@ -308,7 +308,7 @@ public class ExpressionRepositoryService {
 
 		Branch branch = branchService.findLatest(branchPath);
 		String equivalentConceptAssociationRefset = branch.getMetadata().getString(EXPRESSION_EQUIVALENT_CONCEPTS_ASSOCIATION_METADATA_KEY);
-		if (Strings.isBlank(equivalentConceptAssociationRefset) && snomedCodeSystem.isPostcoordinatedNullSafe()) {
+		if (Strings.isNullOrEmpty(equivalentConceptAssociationRefset) && snomedCodeSystem.isPostcoordinatedNullSafe()) {
 			logger.error("Not able to fetch stored equivalent concept associations on {} because branch metadata item {} is missing.",
 					branchPath, EXPRESSION_EQUIVALENT_CONCEPTS_ASSOCIATION_METADATA_KEY);
 			equivalentConceptAssociationRefset = null;
