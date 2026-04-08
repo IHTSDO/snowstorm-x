@@ -6,8 +6,10 @@ import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.OperationOutcome;
+import org.snomed.snowstorm.core.data.domain.CodeSystem;
 import org.snomed.snowstorm.core.data.domain.ConceptMini;
 import org.snomed.snowstorm.core.data.domain.ReferenceSetMember;
+import org.snomed.snowstorm.core.data.services.CodeSystemService;
 import org.snomed.snowstorm.core.data.services.ConceptService;
 import org.snomed.snowstorm.core.data.services.ReferenceSetMemberService;
 import org.snomed.snowstorm.core.data.services.pojo.MemberSearchRequest;
@@ -58,6 +60,9 @@ public class FHIRConceptMapService {
 
 	@Autowired
 	private FHIRCodeSystemService fhirCodeSystemService;
+
+	@Autowired
+	private CodeSystemService codeSystemService;
 
 	@Autowired
 	private ReferenceSetMemberService snomedRefsetMemberService;
@@ -133,10 +138,19 @@ public class FHIRConceptMapService {
 
 	public List<FHIRConceptMap> findAll() {
 		// Load first 1000 until we can figure out pagination
-		List<FHIRConceptMap> maps = getSnomedMaps();
+		List<FHIRConceptMap> maps = new ArrayList<>(hasAnyImportedSnomedVersion() ? getSnomedMaps() : List.of());
 		PageRequest pageRequest = PageRequest.of(0, PAGE_OF_ONE_THOUSAND.getPageSize() - maps.size());
 		maps.addAll(conceptMapRepository.findAll(pageRequest).getContent());
 		return maps;
+	}
+
+	private boolean hasAnyImportedSnomedVersion() {
+		for (CodeSystem edition : codeSystemService.findAll()) {
+			if (codeSystemService.findLatestImportedVersion(edition.getShortName()) != null) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private List<FHIRConceptMap> getSnomedMaps() {
@@ -203,9 +217,11 @@ public class FHIRConceptMapService {
 		// Grab maps from store
 		List<FHIRConceptMap> maps = new ArrayList<>(searchForList(queryBuilder, FHIRConceptMap.class));
 
-		// Grab generated snomed maps
-		maps.addAll(getSnomedMaps().stream()
-				.filter(map -> snomedPredicates.stream().allMatch(predicate -> predicate.test(map))).toList());
+		// Grab generated snomed maps when a SNOMED CT release is loaded
+		if (hasAnyImportedSnomedVersion()) {
+			maps.addAll(getSnomedMaps().stream()
+					.filter(map -> snomedPredicates.stream().allMatch(predicate -> predicate.test(map))).toList());
+		}
 
 		return maps;
 	}
