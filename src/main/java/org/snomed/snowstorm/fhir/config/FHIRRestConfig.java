@@ -8,7 +8,6 @@ import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.hl7.fhir.r4.model.CapabilityStatement;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.TerminologyCapabilities;
-import org.snomed.snowstorm.core.data.services.CodeSystemService;
 import org.snomed.snowstorm.fhir.services.FHIRCodeSystemService;
 import org.snomed.snowstorm.fhir.services.FHIRLoadPackageServlet;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,7 @@ import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import jakarta.servlet.MultipartConfigElement;
 import java.io.IOException;
@@ -31,7 +31,7 @@ public class FHIRRestConfig {
 	@Bean
 	public ServletRegistrationBean<HapiRestfulServlet> hapi(
 			@Autowired(required = false) BuildProperties buildProperties,
-			@Autowired FHIRCodeSystemService codeSystemService) {
+			@Autowired @Lazy FHIRCodeSystemService codeSystemService) {
 
 		HapiRestfulServlet hapiServlet = new HapiRestfulServlet(buildProperties, codeSystemService);
 
