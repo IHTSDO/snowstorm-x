@@ -3,12 +3,17 @@ package org.snomed.snowstorm.core.data.services;
 import org.snomed.snowstorm.core.data.services.pojo.CodeSystemDefaultConfiguration;
 
 import jakarta.annotation.PostConstruct;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CodeSystemDefaultConfigurationService {
+
+	private static final Pattern SNOMEDCT_MODULE_SHORT_NAME = Pattern.compile("^SNOMEDCT-(\\d+)$", Pattern.CASE_INSENSITIVE);
 
 	private final Map<String, String> config = new HashMap<>();
 
@@ -22,6 +27,12 @@ public class CodeSystemDefaultConfigurationService {
 		for (CodeSystemDefaultConfiguration codeSystemConfiguration : configurations) {
 			if (codeSystemConfiguration.shortName().equalsIgnoreCase(codeSystemShortName)) {
 				return codeSystemConfiguration.module();
+			}
+		}
+		if (codeSystemShortName != null) {
+			Matcher m = SNOMEDCT_MODULE_SHORT_NAME.matcher(codeSystemShortName);
+			if (m.matches()) {
+				return m.group(1);
 			}
 		}
 		return null;

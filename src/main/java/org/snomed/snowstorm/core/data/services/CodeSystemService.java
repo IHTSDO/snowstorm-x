@@ -155,10 +155,12 @@ public class CodeSystemService {
 			if (codeSystem.isPostcoordinatedNullSafe()) {
 				continue;
 			}
-			String defaultModuleId = codeSystemDefaultConfigurationService.getDefaultModuleId(codeSystem.getShortName());
-			if (!Objects.equals(codeSystem.getUriModuleId(), defaultModuleId)) {
-				codeSystem.setUriModuleId(defaultModuleId);
-				repository.save(codeSystem);
+			if (codeSystem.getUriModuleId() == null) {
+				String defaultModuleId = codeSystemDefaultConfigurationService.getDefaultModuleId(codeSystem.getShortName());
+				if (defaultModuleId != null) {
+					codeSystem.setUriModuleId(defaultModuleId);
+					repository.save(codeSystem);
+				}
 			}
 		}
 	}
