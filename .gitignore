@@ -15,3 +15,4 @@ snomed-drools-rules
 authoring-traceability.log*
 /application.properties
 test.properties
+docker-environment.txt

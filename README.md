@@ -4,6 +4,20 @@
 
 **This is the Snowstorm-X project, a beta version of [Snowstorm](https://github.com/IHTSDO/snowstorm) with the latest implementation-focused features and enhancements. Please be aware these features have not yet been fully tested.**
 
+## Latest SnowstormX feature: Snowstorm Dashboard (beta)
+
+To install SNOMED CT using the dashboard you must add MLDS credentials.
+### Using Docker
+- Copy `docker-environment.example.txt` to `docker-environment.txt` and add the MLDS credentials.
+- Run `docker compose up`
+- Access the Snowstorm Dashboard http://localhost:8080/fhir/
+
+### Using Java & Maven
+- Copy `application-example.properties` to `application.properties` and add the MLDS credentials.
+- Run `mvn spring-boot:run`
+- Access the Snowstorm Dashboard http://localhost:8080/fhir/
+---
+
 Snowstorm is an open source terminology server with special support for SNOMED CT. It is built on top of Elasticsearch, with a focus on performance and enterprise scalability.
 
 SNOMED International is not able to offer commercial support for this product. 

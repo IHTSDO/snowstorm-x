@@ -36,6 +36,15 @@ Maintenance release with new authoring and search improvements, plus bug fixes a
 - PIP-962 Fix circular dependencies
 - PIP-980 Fix compile error after upgrading snomed-boot version to 5.5.1-SNAPSHOT
 
+## 10.11.10 SnowstormX Release (April 2026)
+SnowstormX release based on Snowstorm version 10.11.1.
+
+### Features
+- New Snowstorm Dashboard (beta)
+  - Manage FHIR resources
+  - Syndicate SNOMED CT packages via MLDS
+
+
 ## 10.11.1 Release (February 2026)
 Maintenance release with bug fixes and general improvements.
 
