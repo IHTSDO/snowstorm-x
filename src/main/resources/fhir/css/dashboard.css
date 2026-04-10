@@ -12,6 +12,14 @@ body {
     overflow-x: hidden;
 }
 
+/* Vertically center cell content in dashboard tables (main area + modals) */
+.main table td,
+.main table th,
+.modal .table td,
+.modal .table th {
+    vertical-align: middle;
+}
+
 #sidebar {
     width: 220px;
     background-color: #1f2a36;
