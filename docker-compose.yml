@@ -1,7 +1,6 @@
-version: '2.1'
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.4
     container_name: elasticsearch
     environment:
       - discovery.type=single-node
@@ -26,8 +25,10 @@ services:
 
 
   snowstorm:
-    image: snomedinternational/snowstorm:latest
+    image: snomedinternational/snowstorm-x:latest
     container_name: snowstorm
+    env_file:
+      - docker-environment.txt
     restart: always
     depends_on:
       elasticsearch:
