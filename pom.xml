@@ -20,7 +20,7 @@
 		<spring.version>6.2.17</spring.version>
 		<spring-boot.version>3.5.13</spring-boot.version>
 		<spring.security.version>6.5.9</spring.security.version>
-		<tomcat-embed.version>10.1.52</tomcat-embed.version>
+		<tomcat-embed.version>10.1.54</tomcat-embed.version>
 		<activemq.version>6.2.4</activemq.version>
 		<hapi-fhir.version>8.8.1</hapi-fhir.version>
 		<fhir_core_version>6.9.5</fhir_core_version>
@@ -394,6 +394,11 @@
 				<scope>import</scope>
 			</dependency>
 			<dependency>
+				<groupId>org.apache.tomcat.embed</groupId>
+				<artifactId>tomcat-embed-el</artifactId>
+				<version>${tomcat-embed.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>ca.uhn.hapi.fhir</groupId>
 				<artifactId>org.hl7.fhir.utilities</artifactId>
 				<version>${fhir_core_version}</version>
@@ -417,6 +422,38 @@
 	</dependencyManagement>
 	<build>
 		<plugins>
+
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>${dependency-check-maven.version}</version>
+				<configuration>
+<!--					<suppressionFiles>-->
+<!--						<suppressionFile>owasp-suppressions.xml</suppressionFile>-->
+<!--					</suppressionFiles>-->
+					<failBuildOnCVSS>7</failBuildOnCVSS>
+					<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+					<failOnError>true</failOnError>
+					<!-- If we need to disable OSS, due to server outage, toggle the boolean on the following line.-->
+					<ossindexAnalyzerEnabled>true</ossindexAnalyzerEnabled>
+					<formats>XML,HTML</formats>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.snomed</groupId>
+						<artifactId>snomed-parent-owasp</artifactId>
+						<version>${snomed-parent-owasp.version}</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
 			<!--
 			   Add the Add-Opens to the manifest file to allow snomed-owl-toolkit to work with java 17. Remove this when the owl-api is updated to use version 5
 		   -->
