@@ -467,6 +467,7 @@
 							<volume>/tmp</volume>
 						</volumes>
 						<workingDirectory>/app</workingDirectory>
+						<user>1000:1000</user>
 					</container>
 					<extraDirectories>
 						<permissions>
