@@ -1,3 +1,4 @@
 # Copy to docker-environment.txt and fill in MLDS credentials from SNOMED International
-MLDS_USERNAME=
-MLDS_PASSWORD=
+
+SYNDICATION_USERNAME=
+SYNDICATION_PASSWORD=
