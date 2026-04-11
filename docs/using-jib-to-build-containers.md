@@ -15,7 +15,7 @@ Note: in order to achieve this the base image must support the desired platforms
 
 ### Amazon Corretto
 
-The [Amazon Corretto](https://hub.docker.com/_/amazoncorretto) OpenJDK 11 base image supports both `linux/amd64` and `linux/arm64`. 
+The [Amazon Corretto](https://hub.docker.com/_/amazoncorretto) OpenJDK 17 base image supports both `linux/amd64` and `linux/arm64`. The build uses the fully qualified reference `docker.io/library/amazoncorretto:17`.
 
 
 ## Build to remote container registry
@@ -104,3 +104,11 @@ PLATFORMS=linux/amd64 scripts/push-image-with-attestations.sh my-registry/snowst
 ```
 
 You must push to a registry (not only `docker load`); BuildKit stores attestations on the registry manifest. See Docker’s [attestations](https://docs.docker.com/build/metadata/attestations/) and [Scout remediation](https://docs.docker.com/scout/policy/remediation/#supply-chain-attestations-remediation) for details.
+
+## Docker Scout: up-to-date and approved base images
+
+Docker Scout’s **Up-to-Date Base Images** and **Approved Base Images** policies only get reliable data when [SLSA provenance](https://docs.docker.com/build/metadata/attestations/slsa-provenance/) is present (see [Supply chain attestations](#supply-chain-attestations-docker-scout) above). Without provenance, Scout often reports **no data** for those checks. Use the same `scripts/push-image-with-attestations.sh` step after `jib:build` so provenance is attached.
+
+**Up-to-date base images:** Scout compares the base layers in your image with the current digest for the tag you built from. Rebuild and push when you want to pick up updates to `amazoncorretto:17`. If you ever pin the base to a digest in `pom.xml`, bump that digest when refreshing the JDK base.
+
+**Approved base images:** This is configured in the **Docker Scout** org (or team) [policy settings](https://docs.docker.com/scout/policy/#approved-base-images), not in this repository. Add an allowed pattern that matches this project’s base, for example `docker.io/library/amazoncorretto:*` or a broader `docker.io/library/*`, depending on your organisation’s rules. Options such as “only supported tags” for Docker Official Images apply to how strictly Scout evaluates official images.
