@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
 # Re-wraps an image produced by Jib so BuildKit can attach SBOM and SLSA provenance
 # attestations (Docker Scout supply chain policy). No layers are added beyond metadata.
-ARG SOURCE_IMAGE
+# Default satisfies BuildKit static analysis; scripts always pass SOURCE_IMAGE.
+ARG SOURCE_IMAGE=docker.io/library/alpine:latest
 FROM ${SOURCE_IMAGE}
