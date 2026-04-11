@@ -1,0 +1,5 @@
+# syntax=docker/dockerfile:1
+# Re-wraps an image produced by Jib so BuildKit can attach SBOM and SLSA provenance
+# attestations (Docker Scout supply chain policy). No layers are added beyond metadata.
+ARG SOURCE_IMAGE
+FROM ${SOURCE_IMAGE}
