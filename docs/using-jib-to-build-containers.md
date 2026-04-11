@@ -85,3 +85,22 @@ mvn compile jib:dockerBuild -P docker-amd64
 ```
 mvn compile jib:dockerBuild -P docker-arm64
 ```
+
+## Supply chain attestations (Docker Scout)
+
+[Jib](https://github.com/GoogleContainerTools/jib) does not attach [BuildKit attestations](https://docs.docker.com/build/metadata/attestations/) (SBOM and SLSA provenance). Docker Scout’s default **Supply Chain Attestations** policy expects both an SBOM and **provenance with `mode=max`**, which are normally produced by `docker buildx build`.
+
+After pushing an image with Jib, re-wrap and push the same reference with BuildKit so attestations are attached to the manifest index:
+
+```
+mvn compile jib:build
+scripts/push-image-with-attestations.sh docker.io/snomedinternational/snowstorm-x:10.11.10
+```
+
+Use the same registry path and tag you passed to Jib (`docker.registry`, `docker.image.prefix`, and `docker.image.tag` in `pom.xml`). Override architectures if needed, for example:
+
+```
+PLATFORMS=linux/amd64 scripts/push-image-with-attestations.sh my-registry/snowstorm-x:tag
+```
+
+You must push to a registry (not only `docker load`); BuildKit stores attestations on the registry manifest. See Docker’s [attestations](https://docs.docker.com/build/metadata/attestations/) and [Scout remediation](https://docs.docker.com/scout/policy/remediation/#supply-chain-attestations-remediation) for details.
