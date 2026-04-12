@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## 10.11.10 SnowstormX Release (April 2026)
+## 10.11.11 SnowstormX Release (April 2026)
 SnowstormX release based on Snowstorm version 10.11.1.
 
 ### Features
