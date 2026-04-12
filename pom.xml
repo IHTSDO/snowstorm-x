@@ -428,9 +428,6 @@
 				<artifactId>dependency-check-maven</artifactId>
 				<version>${dependency-check-maven.version}</version>
 				<configuration>
-<!--					<suppressionFiles>-->
-<!--						<suppressionFile>owasp-suppressions.xml</suppressionFile>-->
-<!--					</suppressionFiles>-->
 					<failBuildOnCVSS>7</failBuildOnCVSS>
 					<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
 					<failOnError>true</failOnError>
