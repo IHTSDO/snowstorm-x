@@ -16,6 +16,8 @@
 	<properties>
 		<packageName>${project.artifactId}</packageName>
 		<elasticsearch.version>8.19.14</elasticsearch.version>
+		<!-- Jackson 3.x from elasticsearch-java; 3.0.0 is affected by CVE-2026-29062 — BOM aligns to patched line -->
+		<jackson3.version>3.1.2</jackson3.version>
 		<!-- BOM Overrides (Usually CVE fixes) -->
 		<!-- MUST be checked after every BOM upgrade! -->
 		<spring.version>6.2.17</spring.version>
@@ -380,6 +382,13 @@
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>tools.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>${jackson3.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 			<dependency>
 				<groupId>com.google.code.gson</groupId>
 				<artifactId>gson</artifactId>
