@@ -25,6 +25,7 @@
 		<activemq.version>6.2.4</activemq.version>
 		<hapi-fhir.version>8.8.1</hapi-fhir.version>
 		<fhir_core_version>6.9.5</fhir_core_version>
+		<gson.version>2.13.2</gson.version>
 
 		<!-- Docker -->
 		<docker.registry>docker.io</docker.registry>
@@ -387,6 +388,11 @@
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>com.google.code.gson</groupId>
+				<artifactId>gson</artifactId>
+				<version>${gson.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
