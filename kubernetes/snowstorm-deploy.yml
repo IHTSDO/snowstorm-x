@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: snowstorm-elasticsearch
-        image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.19.14
         volumeMounts:
           - name: elasticsearch-data
             mountPath: /usr/share/elasticsearch/data
@@ -24,6 +24,10 @@ spec:
         - containerPort: 9200
           protocol: TCP
         env:
+        - name: discovery.type
+          value: single-node
+        - name: xpack.security.enabled
+          value: "false"
         - name: ES_JAVA_OPTS
           value: "-Xms4g -Xmx4g"
         livenessProbe:

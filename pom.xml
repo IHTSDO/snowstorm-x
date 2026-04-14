@@ -15,6 +15,7 @@
 
 	<properties>
 		<packageName>${project.artifactId}</packageName>
+		<elasticsearch.version>8.19.14</elasticsearch.version>
 		<!-- BOM Overrides (Usually CVE fixes) -->
 		<!-- MUST be checked after every BOM upgrade! -->
 		<spring.version>6.2.17</spring.version>

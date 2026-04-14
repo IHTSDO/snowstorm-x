@@ -32,7 +32,7 @@ import java.util.Properties;
 		})
 public class TestConfig extends Config {
 
-	private static final String ELASTIC_SEARCH_SERVER_VERSION = "8.11.1";
+	private static final String ELASTIC_SEARCH_SERVER_VERSION = "8.19.14";
 
 	// If running unit tests regularly using an already running local Elasticsearch container can speed up testing
 	// To use this option create a test.properties file in the root of the project containing the value test.elasticsearch.local=true
