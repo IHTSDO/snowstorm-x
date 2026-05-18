@@ -23,7 +23,7 @@
 		<tomcat-embed.version>10.1.54</tomcat-embed.version>
 		<activemq.version>6.2.4</activemq.version>
 		<hapi-fhir.version>8.8.1</hapi-fhir.version>
-		<fhir_core_version>6.9.5</fhir_core_version>
+		<fhir_core_version>6.9.7</fhir_core_version>
 
 		<!-- Docker -->
 		<docker.registry>docker.io</docker.registry>
