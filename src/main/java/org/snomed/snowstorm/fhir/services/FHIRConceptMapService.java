@@ -162,6 +162,7 @@ public class FHIRConceptMapService {
 			map.setId("snomed_implicit_map_" + refsetId);
 			map.setUrl("http://snomed.info/sct?fhir_cm=" + refsetId);
 			map.setName(snomedMap.getName());
+			map.setStatus(Enumerations.PublicationStatus.ACTIVE.toCode());
 			map.setSourceUri(snomedMap.getSourceSystem() + WHOLE_SYSTEM_VALUE_SET_URI_POSTFIX);
 			map.setTargetUri(snomedMap.getTargetSystem() + WHOLE_SYSTEM_VALUE_SET_URI_POSTFIX);
 
