@@ -36,6 +36,24 @@ Maintenance release with new authoring and search improvements, plus bug fixes a
 - PIP-962 Fix circular dependencies
 - PIP-980 Fix compile error after upgrading snomed-boot version to 5.5.1-SNAPSHOT
 
+## 10.11.12 SnowstormX Release (July 2026)
+Maintenance release with security fixes and general improvements.
+
+### Improvements
+
+- Upgrade to Elasticsearch client 8.19.14
+- Upgrade parent BOM to 3.14.1
+- Update Docker Compose configuration
+
+### Fixes
+
+- Set active status on implicit FHIR ConceptMaps
+- Allow application to start when SNOMED Drools authoring rules are unavailable
+- Address CVE-2026-29062 (Jackson 3.x)
+- Address dependency CVE fixes (Spring Boot, Spring Security, Tomcat, ActiveMQ, Log4j, Gson, PostgreSQL, and others)
+- Disable authoring traceability log by default for Docker deployments
+
+
 ## 10.11.11 SnowstormX Release (April 2026)
 SnowstormX release based on Snowstorm version 10.11.1.
 
