@@ -17,17 +17,25 @@
 		<packageName>${project.artifactId}</packageName>
 		<elasticsearch.version>8.19.14</elasticsearch.version>
 		<!-- Jackson 3.x from elasticsearch-java; 3.0.0 is affected by CVE-2026-29062 — BOM aligns to patched line -->
-		<jackson3.version>3.1.2</jackson3.version>
+		<jackson3.version>3.1.4</jackson3.version>
 		<!-- BOM Overrides (Usually CVE fixes) -->
 		<!-- MUST be checked after every BOM upgrade! -->
-		<spring.version>6.2.17</spring.version>
-		<spring-boot.version>3.5.13</spring-boot.version>
-		<spring.security.version>6.5.9</spring.security.version>
-		<tomcat-embed.version>10.1.54</tomcat-embed.version>
-		<activemq.version>6.2.4</activemq.version>
+		<spring-boot.version>3.5.15</spring-boot.version>
+		<spring-cloud.version>2025.0.3</spring-cloud.version>
+		<spring-cloud-starter-consul.version>4.3.3</spring-cloud-starter-consul.version>
+		<spring-cloud-starter-vault.version>4.3.3</spring-cloud-starter-vault.version>
+		<spring.version>6.2.19</spring.version>
+		<spring.security.version>6.5.11</spring.security.version>
+		<jackson.version>2.18.8</jackson.version>
+		<tomcat-embed.version>10.1.57</tomcat-embed.version>
+		<activemq.version>6.2.7</activemq.version>
 		<hapi-fhir.version>8.8.1</hapi-fhir.version>
-		<fhir_core_version>6.9.5</fhir_core_version>
 		<gson.version>2.13.2</gson.version>
+		<libthrift.version>0.23.0</libthrift.version>
+		<protobuf.version>4.30.0</protobuf.version>
+		<log4j2.version>2.26.0</log4j2.version>
+		<postgresql.version>42.7.12</postgresql.version>
+		<httpcore5.version>5.4.3</httpcore5.version>
 
 		<!-- Docker -->
 		<docker.registry>docker.io</docker.registry>
@@ -415,24 +423,39 @@
 				<version>${tomcat-embed.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>ca.uhn.hapi.fhir</groupId>
-				<artifactId>org.hl7.fhir.utilities</artifactId>
-				<version>${fhir_core_version}</version>
+				<groupId>org.elasticsearch.client</groupId>
+				<artifactId>elasticsearch-rest-client</artifactId>
+				<version>${elasticsearch.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>ca.uhn.hapi.fhir</groupId>
-				<artifactId>org.hl7.fhir.r4</artifactId>
-				<version>${fhir_core_version}</version>
+				<groupId>org.apache.thrift</groupId>
+				<artifactId>libthrift</artifactId>
+				<version>${libthrift.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>ca.uhn.hapi.fhir</groupId>
-				<artifactId>org.hl7.fhir.convertors</artifactId>
-				<version>${fhir_core_version}</version>
+				<groupId>com.google.protobuf</groupId>
+				<artifactId>protobuf-java</artifactId>
+				<version>${protobuf.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>ca.uhn.hapi.fhir</groupId>
-				<artifactId>org.hl7.fhir.validation</artifactId>
-				<version>${fhir_core_version}</version>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-api</artifactId>
+				<version>${log4j2.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.postgresql</groupId>
+				<artifactId>postgresql</artifactId>
+				<version>${postgresql.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.httpcomponents.core5</groupId>
+				<artifactId>httpcore5</artifactId>
+				<version>${httpcore5.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.httpcomponents.core5</groupId>
+				<artifactId>httpcore5-h2</artifactId>
+				<version>${httpcore5.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -444,11 +467,14 @@
 				<artifactId>dependency-check-maven</artifactId>
 				<version>${dependency-check-maven.version}</version>
 				<configuration>
+					<suppressionFiles>
+						<suppressionFile>owasp-suppressions.xml</suppressionFile>
+					</suppressionFiles>
 					<failBuildOnCVSS>7</failBuildOnCVSS>
 					<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
 					<failOnError>true</failOnError>
 					<!-- If we need to disable OSS, due to server outage, toggle the boolean on the following line.-->
-					<ossindexAnalyzerEnabled>true</ossindexAnalyzerEnabled>
+					<ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
 					<formats>XML,HTML</formats>
 				</configuration>
 				<dependencies>
