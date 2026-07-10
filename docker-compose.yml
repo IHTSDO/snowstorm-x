@@ -23,9 +23,8 @@ services:
       - "127.0.0.1:9200:9200"
     mem_reservation: 4g
 
-
   snowstorm:
-    image: snomedinternational/snowstorm-x:10.11.11
+    image: snomedinternational/snowstorm-x:latest
     container_name: snowstorm
     env_file:
       - docker-environment.txt
