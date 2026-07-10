@@ -71,7 +71,9 @@ public class DroolsValidationService {
 	private final String droolsRulesPath;
 	private final ResourceManager testResourceManager;
 
+	@Nullable
 	private RuleExecutor ruleExecutor;
+	@Nullable
 	private TestResourceProvider testResourceProvider;
 	private final ExecutorService batchExecutorService;
 
@@ -89,6 +91,9 @@ public class DroolsValidationService {
 	}
 
 	public Set<String> getSemanticTags(String language) {
+		if (testResourceProvider == null) {
+			return Collections.emptySet();
+		}
 		if (StringUtils.hasLength(language)) {
 			Set<String> languageSet = Arrays.stream(language.split(",")).map(String::trim).collect(Collectors.toSet());
 			return testResourceProvider.getSemanticTagsByLanguage(languageSet);
@@ -102,6 +107,10 @@ public class DroolsValidationService {
 	}
 
 	public List<InvalidContent> validateConcepts(String branchPath, Set<Concept> concepts) throws ServiceException {
+		if (ruleExecutor == null) {
+			throw new ServiceException(String.format(
+					"SNOMED Drools validation is not available: rules directory is missing or not accessible at '%s'.", droolsRulesPath));
+		}
 		// Get drools assertion groups to run
 		Branch branchWithInheritedMetadata = branchService.findBranchOrThrow(branchPath, true);
 		String assertionGroupNamesMetaString = branchWithInheritedMetadata.getMetadata().getString(BranchMetadataKeys.ASSERTION_GROUP_NAMES);
@@ -263,6 +272,14 @@ public class DroolsValidationService {
 			if (!dir.mkdirs()) {
 				logger.warn("Failed to create directory {}", droolsRulesPath);
 			}
+		}
+		if (!dir.isDirectory()) {
+			logger.warn(
+					"Snomed-Drools rules directory does not exist or is not accessible at '{}'. Drools validation and related features are disabled until it is available.",
+					droolsRulesPath);
+			ruleExecutor = null;
+			testResourceProvider = null;
+			return;
 		}
 		this.ruleExecutor = new RuleExecutorFactory().createRuleExecutor(droolsRulesPath);
 		this.testResourceProvider = ruleExecutor.newTestResourceProvider(testResourceManager);
