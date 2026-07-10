@@ -60,3 +60,15 @@ entrypoint: java -Xms2g -Xmx4g -cp @/app/jib-classpath-file org.snomed.snowstorm
 ```
 
 Other config options may be of interest when running you own instance, for example `snowstorm.rest-api.readonly.allowReadOnlyPostEndpoints` and `snowstorm.rest-api.allowUnlimitedConceptPagination` which default to false. See the [Configuration Guide](configuration-guide.md).
+
+## Authoring traceability
+
+Authoring traceability is disabled by default (`authoring.traceability.enabled=false`), so the default Docker setup does not create an `authoring-traceability.log` file and does not require a writable volume for Snowstorm.
+
+If you enable traceability for an authoring deployment, the Snowstorm image runs with a read-only `/app` directory. You must provide a writable log directory, for example by mounting a volume and setting:
+
+```bash
+-Dsnowstorm.authoringTraceabilityLogDir=/var/log/snowstorm --authoring.traceability.enabled=true
+```
+
+See the traceability section in [`application.properties`](../src/main/resources/application.properties) for more details.

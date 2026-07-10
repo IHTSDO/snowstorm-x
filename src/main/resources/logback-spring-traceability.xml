@@ -6,15 +6,16 @@
 		<appender-ref ref="CONSOLE"/>
 	</root>
 
-	<!-- File appender for authoring traceability -->
+	<!-- File appender for authoring traceability (dir configurable; default is CWD). -->
+	<property name="AUTHORING_TRACEABILITY_LOG_DIR" value="${snowstorm.authoringTraceabilityLogDir:-.}" />
 	<appender name="traceability-appender"
 			  class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<encoder>
 			<pattern>${FILE_LOG_PATTERN}</pattern>
 		</encoder>
-		<file>authoring-traceability.log</file>
+		<file>${AUTHORING_TRACEABILITY_LOG_DIR}/authoring-traceability.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-			<fileNamePattern>authoring-traceability.log.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+			<fileNamePattern>${AUTHORING_TRACEABILITY_LOG_DIR}/authoring-traceability.log.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
 			<maxFileSize>${LOG_FILE_MAX_SIZE:-10MB}</maxFileSize>
 			<maxHistory>${LOG_FILE_MAX_HISTORY:-0}</maxHistory>
 		</rollingPolicy>
