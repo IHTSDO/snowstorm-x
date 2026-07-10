@@ -434,7 +434,7 @@ public class ExpressionsDiffUtil {
 	private static class MRCMRefsetComponentsLoader extends ImpotentComponentFactory {
 		List<ReferenceSetMember> mrcmRefsetMembers = new ArrayList<>();
 
-		public void newReferenceSetMemberState(String[] fieldNames, String id, String effectiveTime, String active, String moduleId, String refsetId, String referencedComponentId, String... otherValues) {
+		public void newReferenceSetMemberState(String filename, String[] fieldNames, String id, String effectiveTime, String active, String moduleId, String refsetId, String referencedComponentId, String... otherValues) {
 			if (!Concepts.MRCM_INTERNATIONAL_REFSETS.contains(refsetId)) {
 				return;
 			}
