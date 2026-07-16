@@ -2,6 +2,7 @@ package org.snomed.snowstorm.fhir.services;
 
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.OperationOutcome;
+import org.hl7.fhir.r4.model.Parameters;
 import org.ihtsdo.drools.helper.IdentifierHelper;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import org.snomed.snowstorm.core.data.services.postcoordination.model.Comparable
 import org.snomed.snowstorm.core.data.services.postcoordination.model.PostCoordinatedExpression;
 import org.snomed.snowstorm.core.pojo.LanguageDialect;
 import org.snomed.snowstorm.fhir.domain.FHIRCodeSystemVersion;
+import org.snomed.snowstorm.fhir.domain.FHIRConcept;
 import org.snomed.snowstorm.fhir.domain.SubsumesResult;
 import org.snomed.snowstorm.fhir.pojo.CanonicalUri;
 import org.snomed.snowstorm.fhir.pojo.ConceptAndSystemResult;
@@ -72,6 +74,12 @@ public class FHIRCodeSystemService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	@Autowired
 	private CodeSystemVersionRepository codeSystemVersionRepository;
+
+	@Autowired
+	private FHIRHelper fhirHelper;
+
+	@Autowired
+	private HapiParametersMapper pMapper;
 
 	public FHIRCodeSystemVersion createUpdate(CodeSystem codeSystem) throws ServiceException {
 		FHIRCodeSystemVersion fhirCodeSystemVersion = new FHIRCodeSystemVersion(codeSystem);
@@ -556,5 +564,77 @@ public class FHIRCodeSystemService {
 
 	private void throwCodeNotFound(String code, FHIRCodeSystemVersion codeSystemVersion) {
 		throw exception(String.format("Code '%s' was not found in code system '%s'.", code, codeSystemVersion), OperationOutcome.IssueType.INVALID, 400);
+	}
+
+	public Parameters validateCode(
+			FHIRCodeSystemVersionParams codeSystemParams,
+			String code,
+			String display,
+			String acceptLanguageHeader) {
+
+		List<LanguageDialect> languageDialects = fhirHelper.getLanguageDialects(null, acceptLanguageHeader);
+		if (codeSystemParams.isSnomed()) {
+			ConceptAndSystemResult conceptAndSystemResult = findSnomedConcept(code, languageDialects, codeSystemParams);
+			Concept concept = conceptAndSystemResult.getConcept();
+			FHIRCodeSystemVersion codeSystemVersion = conceptAndSystemResult.getCodeSystemVersion();
+
+			boolean result = false;
+			String message = conceptAndSystemResult.getMessage();
+			String displayOut = null;
+			if (concept != null) {
+				if (display == null) {
+					result = true;
+				} else {
+					String displayLower = display.toLowerCase();
+					if (concept.getPt().getTerm().toLowerCase().equals(displayLower)) {
+						result = true;
+					} else {
+						for (Description d : concept.getActiveDescriptions()) {
+							if (d.getTerm().toLowerCase().equals(displayLower)) {
+								message = "Display term is acceptable, but not the preferred synonym in the language/dialect specified.";
+								result = true;
+								break;
+							}
+						}
+						if (!result) {
+							message = "Code exists, but the display term is not recognised.";
+						}
+					}
+				}
+				displayOut = concept.getPt().getTerm();
+			} else {
+				message = "The code was not found in the specified code system.";
+				if (conceptAndSystemResult.getMessage() != null) {
+					message = conceptAndSystemResult.getMessage();
+				}
+			}
+			Parameters parameters = new Parameters();
+			parameters.addParameter("result", result);
+			if (message != null) {
+				parameters.addParameter("message", message);
+			}
+			if (displayOut != null) {
+				parameters.addParameter("display", displayOut);
+			}
+			if (concept != null) {
+				parameters.addParameter("inactive", !concept.isActive());
+			}
+			parameters.addParameter("system", codeSystemVersion.getUrl());
+			parameters.addParameter("version", codeSystemVersion.getVersion());
+			return parameters;
+		} else {
+			FHIRCodeSystemVersion codeSystemVersion = findCodeSystemVersionOrThrow(codeSystemParams);
+			FHIRConcept concept = conceptService.findConcept(codeSystemVersion, code);
+
+			if (concept != null) {
+				boolean displayValidOrNull = display == null ||
+						display.equals(concept.getDisplay()) ||
+						concept.getDesignations().stream().anyMatch(designation -> display.equals(designation.getValue()));
+
+				return pMapper.validateCodeResponse(concept, displayValidOrNull, codeSystemVersion);
+			} else {
+				return pMapper.resultFalseWithMessage(code, codeSystemVersion, "The code was not found in the specified code system.");
+			}
+		}
 	}
 }

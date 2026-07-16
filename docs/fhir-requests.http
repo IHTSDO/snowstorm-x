@@ -21,6 +21,29 @@ GET {{baseUrl}}/CodeSystem/$lookup
     &property=normalForm
     &property=sufficientlyDefined
 
+#### R3b: Batch validate multiple codes using a FHIR batch Bundle
+POST {{baseUrl}}/
+Content-Type: application/fhir+json
+
+{
+  "resourceType": "Bundle",
+  "type": "batch",
+  "entry": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "CodeSystem/$validate-code?url=http://snomed.info/sct&version=http://snomed.info/sct/900000000000207008&code=404684003"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "CodeSystem/$validate-code?url=http://snomed.info/sct&version=http://snomed.info/sct/900000000000207008&code=840539006"
+      }
+    }
+  ]
+}
+
 #### R4: Code System Lookup of "427623005 |Obstetric umbilical artery Doppler (procedure)|" in Swedish Extension
 #### This example allows use of language headers to specify Swedish language.
 GET {{baseUrl}}/CodeSystem/$lookup

@@ -421,7 +421,7 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 		mutuallyExclusive("code", code, "coding", coding);
 		mutuallyRequired("display", display, "code", code, "coding", coding);
 		FHIRCodeSystemVersionParams codeSystemParams = getCodeSystemVersionParams(null, url, version, coding);
-		return validateCode(codeSystemParams, fhirHelper.recoverCode(code, coding), display, request.getHeader(ACCEPT_LANGUAGE_HEADER));
+		return fhirCodeSystemService.validateCode(codeSystemParams, fhirHelper.recoverCode(code, coding), display, request.getHeader(ACCEPT_LANGUAGE_HEADER));
 	}
 	
 	@Operation(name="$validate-code", idempotent=true)
@@ -438,79 +438,7 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 			@OperationParam(name="coding") Coding coding,
 			@OperationParam(name="displayLanguage") String displayLanguage) {
 		FHIRCodeSystemVersionParams codeSystemParams = getCodeSystemVersionParams(id, url, version, coding);
-		return validateCode(codeSystemParams, fhirHelper.recoverCode(code, coding), display, request.getHeader(ACCEPT_LANGUAGE_HEADER));
-	}
-	
-	private Parameters validateCode(
-			FHIRCodeSystemVersionParams codeSystemParams,
-			String code,
-			String display,
-			String acceptLanguageHeader) {
-
-		List<LanguageDialect> languageDialects = fhirHelper.getLanguageDialects(null, acceptLanguageHeader);
-		if (codeSystemParams.isSnomed()) {
-			ConceptAndSystemResult conceptAndSystemResult = fhirCodeSystemService.findSnomedConcept(code, languageDialects, codeSystemParams);
-			Concept concept = conceptAndSystemResult.getConcept();
-			FHIRCodeSystemVersion codeSystemVersion = conceptAndSystemResult.getCodeSystemVersion();
-
-			boolean result = false;
-			String message = conceptAndSystemResult.getMessage();
-			String displayOut = null;
-			if (concept != null) {
-				if (display == null) {
-					result = true;
-				} else {
-					String displayLower = display.toLowerCase();
-					if (concept.getPt().getTerm().toLowerCase().equals(displayLower)) {
-						result = true;
-					} else {
-						for (Description d : concept.getActiveDescriptions()) {
-							if (d.getTerm().toLowerCase().equals(displayLower)) {
-								message = "Display term is acceptable, but not the preferred synonym in the language/dialect specified.";
-								result = true;
-								break;
-							}
-						}
-						if (!result) {
-							message = "Code exists, but the display term is not recognised.";
-						}
-					}
-				}
-				displayOut = concept.getPt().getTerm();
-			} else {
-				message = "The code was not found in the specified code system.";
-				if (conceptAndSystemResult.getMessage() != null) {
-					message = conceptAndSystemResult.getMessage();
-				}
-			}
-			Parameters parameters = new Parameters();
-			parameters.addParameter("result", result);
-			if (message != null) {
-				parameters.addParameter("message", message);
-			}
-			if (displayOut != null) {
-				parameters.addParameter("display", displayOut);
-			}
-			if (concept != null) {
-				parameters.addParameter("inactive", !concept.isActive());
-			}
-			parameters.addParameter("system", codeSystemVersion.getUrl());
-			parameters.addParameter("version", codeSystemVersion.getVersion());
-			return parameters;
-		} else {
-			FHIRCodeSystemVersion codeSystemVersion = fhirCodeSystemService.findCodeSystemVersionOrThrow(codeSystemParams);
-			FHIRConcept concept = fhirConceptService.findConcept(codeSystemVersion, code);
-
-			if (concept != null) {
-				boolean displayValidOrNull = display == null ||
-						display.equals(concept.getDisplay()) ||
-						concept.getDesignations().stream().anyMatch(designation -> display.equals(designation.getValue()));
-
-				return pMapper.validateCodeResponse(concept, displayValidOrNull, codeSystemVersion);
-			} else {
-				return pMapper.resultFalseWithMessage(code, codeSystemVersion, "The code was not found in the specified code system.");
-			}
-		}
+		return fhirCodeSystemService.validateCode(codeSystemParams, fhirHelper.recoverCode(code, coding), display, request.getHeader(ACCEPT_LANGUAGE_HEADER));
 	}
 	
 	@Operation(name="$subsumes", idempotent=true)

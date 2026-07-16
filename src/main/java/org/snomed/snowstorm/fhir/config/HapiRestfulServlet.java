@@ -74,6 +74,8 @@ public class HapiRestfulServlet extends RestfulServer {
 
 		setServerConformanceProvider(new FHIRTerminologyCapabilitiesProvider(this, buildProperties, codeSystemService));
 
+		registerProvider(applicationContext.getBean(FHIRBatchProvider.class));
+
 		// Register interceptors
 		registerInterceptor(new RootInterceptor());
 

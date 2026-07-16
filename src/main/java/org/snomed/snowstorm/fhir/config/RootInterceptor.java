@@ -38,8 +38,12 @@ public class RootInterceptor extends InterceptorAdapter {
 				return false;
 			}
 
-			// The base URL /fhir/ will return a static HTML page
+			// The base URL /fhir/ will return a static HTML page for browser GET/HEAD requests
 			if (pathInfo.equals("/")) {
+				String method = request.getMethod();
+				if (!"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method)) {
+					return true;
+				}
 				response.setContentType("text/html; charset=UTF-8");
 				try (InputStream ios = getClass().getResourceAsStream(FHIR_RESOURCE_ROOT + "/index.html")) {
 					if (ios == null) {
