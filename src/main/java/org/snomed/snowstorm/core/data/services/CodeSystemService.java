@@ -734,7 +734,20 @@ public class CodeSystemService {
 		return null;
 	}
 
-	@CacheEvict(value = {"code-systems", "code-system-branches"}, allEntries = true)
+	public CodeSystemVersion findLatestVisibleVersionOfAnyEdition() {
+		for (CodeSystem codeSystem : findAll()) {
+			if (codeSystem.isPostcoordinatedNullSafe()) {
+				continue;
+			}
+			CodeSystemVersion version = findLatestVisibleVersion(codeSystem.getShortName());
+			if (version != null) {
+				version.setCodeSystem(codeSystem);
+				return version;
+			}
+		}
+		return null;
+	}
+
 	public void deleteAll() {
 		repository.deleteAll();
 		versionRepository.deleteAll();

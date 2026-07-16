@@ -571,18 +571,18 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 		}
 
 		FHIRCodeSystemVersionParams codeSystemParams = getCodeSystemVersionParams(id, system, version, null);
-		// Pick a code system version. A specific version of SNOMED is selected. If a version is given in the version or coding params that will be used.
-		FHIRCodeSystemVersion codeSystemVersion = fhirCodeSystemService.findCodeSystemVersionOrThrow(codeSystemParams);// Performs any id / system-version crosscheck
 
 		requireExactlyOneOf("codeA", codeAParam, "codingA", codingA);
 		requireExactlyOneOf("codeB", codeBParam, "codingB", codingB);
 
+		String codeA = fhirHelper.recoverCode(codeAParam, codingA);
+		String codeB = fhirHelper.recoverCode(codeBParam, codingB);
+
+		FHIRCodeSystemVersion codeSystemVersion = fhirCodeSystemService.resolveSnomedCodeSystemVersionForSubsumes(codeA, codeB, codeSystemParams);
+
 		// Validate that codings are null or match given system
 		fhirHelper.notSupportedSubsumesAcrossCodeSystemVersions(codeSystemVersion, codingA);
 		fhirHelper.notSupportedSubsumesAcrossCodeSystemVersions(codeSystemVersion, codingB);
-
-		String codeA = fhirHelper.recoverCode(codeAParam, codingA);
-		String codeB = fhirHelper.recoverCode(codeBParam, codingB);
 		SubsumesResult subsumesResult;
 		if (isPostcoordinatedSnomed(codeA, codeSystemParams) || isPostcoordinatedSnomed(codeB, codeSystemParams)) {
 			try {

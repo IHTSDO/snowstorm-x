@@ -272,6 +272,12 @@ public class FHIRCodeSystemService {
 					// Fall back to any imported version
 					snomedVersion = snomedCodeSystemService.findLatestImportedVersion(shortName);
 				}
+				if (snomedVersion == null && snomedModule == null) {
+					snomedVersion = snomedCodeSystemService.findLatestVisibleVersionOfAnyEdition();
+					if (snomedVersion != null) {
+						snomedCodeSystem = snomedVersion.getCodeSystem();
+					}
+				}
 				if (snomedVersion == null) {
 					throw exception(format("The latest version of the requested CodeSystem %s was not found.", params.toDiagnosticString()),
 							OperationOutcome.IssueType.NOTFOUND, 404);
@@ -338,6 +344,83 @@ public class FHIRCodeSystemService {
 			conceptService.deleteExistingCodes(versionId);
 			codeSystemRepository.deleteById(versionId);
 		}
+	}
+
+	public FHIRCodeSystemVersion resolveSnomedCodeSystemVersionForSubsumes(String codeA, String codeB, FHIRCodeSystemVersionParams params) {
+		if (!params.isUnspecifiedReleasedSnomed()) {
+			return findCodeSystemVersionOrThrow(params);
+		}
+
+		FHIRCodeSystemVersion codeSystemVersion = getSnomedVersionOrThrow(params);
+		if (bothCodesExistOnSnomedBranch(codeA, codeB, codeSystemVersion)) {
+			return codeSystemVersion;
+		}
+
+		Concept conceptA = findConceptViaMultiSearch(codeA);
+		Concept conceptB = findConceptViaMultiSearch(codeB);
+		FHIRCodeSystemVersion commonEdition = findCommonSnomedEdition(codeA, codeB, conceptA, conceptB);
+		if (commonEdition != null) {
+			return commonEdition;
+		}
+
+		throw exception(format("No single loaded SNOMED CT edition contains both codes '%s' and '%s'.", codeA, codeB),
+				OperationOutcome.IssueType.NOTFOUND, 404);
+	}
+
+	private FHIRCodeSystemVersion findCommonSnomedEdition(String codeA, String codeB, Concept conceptA, Concept conceptB) {
+		Set<String> seenShortNames = new LinkedHashSet<>();
+		List<FHIRCodeSystemVersion> candidates = new ArrayList<>();
+
+		org.snomed.snowstorm.core.data.domain.CodeSystem international = snomedCodeSystemService.find(CodeSystemService.SNOMEDCT);
+		if (international != null) {
+			addCandidateEdition(candidates, seenShortNames, international);
+		}
+		if (conceptA != null) {
+			addCandidateEditionFromConceptPath(candidates, seenShortNames, conceptA.getPath());
+		}
+		if (conceptB != null) {
+			addCandidateEditionFromConceptPath(candidates, seenShortNames, conceptB.getPath());
+		}
+
+		for (FHIRCodeSystemVersion candidate : candidates) {
+			if (bothCodesExistOnSnomedBranch(codeA, codeB, candidate)) {
+				return candidate;
+			}
+		}
+		return null;
+	}
+
+	private void addCandidateEdition(List<FHIRCodeSystemVersion> candidates, Set<String> seenShortNames,
+			org.snomed.snowstorm.core.data.domain.CodeSystem codeSystem) {
+		CodeSystemVersion version = snomedCodeSystemService.findLatestVisibleVersion(codeSystem.getShortName());
+		if (version == null) {
+			version = snomedCodeSystemService.findLatestImportedVersion(codeSystem.getShortName());
+		}
+		if (version != null && seenShortNames.add(codeSystem.getShortName())) {
+			version.setCodeSystem(codeSystem);
+			candidates.add(new FHIRCodeSystemVersion(version));
+		}
+	}
+
+	private void addCandidateEditionFromConceptPath(List<FHIRCodeSystemVersion> candidates, Set<String> seenShortNames, String branchPath) {
+		CodeSystemVersion systemVersion = snomedMultiSearchService.getNearestPublishedVersion(branchPath);
+		if (systemVersion != null && seenShortNames.add(systemVersion.getShortName())) {
+			candidates.add(new FHIRCodeSystemVersion(systemVersion));
+		}
+	}
+
+	private Concept findConceptViaMultiSearch(String code) {
+		ConceptCriteria criteria = new ConceptCriteria().conceptIds(Collections.singleton(code));
+		List<Concept> content = snomedMultiSearchService.findConcepts(criteria, PageRequest.of(0, 1)).getContent();
+		return content.isEmpty() ? null : content.get(0);
+	}
+
+	private boolean bothCodesExistOnSnomedBranch(String codeA, String codeB, FHIRCodeSystemVersion codeSystemVersion) {
+		if (!codeSystemVersion.isOnSnomedBranch()) {
+			return false;
+		}
+		String branch = codeSystemVersion.getSnomedBranch();
+		return snomedConceptService.exists(codeA, branch) && snomedConceptService.exists(codeB, branch);
 	}
 
 	// Used for $lookup and $validate-code
