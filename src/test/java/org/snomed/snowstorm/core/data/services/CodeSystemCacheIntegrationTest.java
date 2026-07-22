@@ -29,7 +29,7 @@ class CodeSystemCacheIntegrationTest extends AbstractTest {
 	private CacheManager cacheManager;
 
 	@Test
-	void createCodeSystemShouldEvictCodeSystemAndBranchCaches() {
+	void createCodeSystemShouldEvictCodeSystemAndBranchCaches() throws ServiceException {
 		// Prime both caches
 		createAndPrimeCaches();
 
@@ -39,7 +39,7 @@ class CodeSystemCacheIntegrationTest extends AbstractTest {
 	}
 
 	@Test
-	void failedCreateCodeSystemShouldNotEvictCaches() {
+	void failedCreateCodeSystemShouldNotEvictCaches() throws ServiceException {
 		// Prime both caches
 		createAndPrimeCaches();
 
@@ -50,7 +50,7 @@ class CodeSystemCacheIntegrationTest extends AbstractTest {
 	}
 
 	@Test
-	void updateCodeSystemShouldEvictCodeSystemAndBranchCaches() {
+	void updateCodeSystemShouldEvictCodeSystemAndBranchCaches() throws ServiceException {
 		createAndPrimeCaches();
 
 		CodeSystem codeSystem = codeSystemService.find("SNOMEDCT");
@@ -60,18 +60,18 @@ class CodeSystemCacheIntegrationTest extends AbstractTest {
 	}
 
 	@Test
-	void deleteCodeSystemShouldEvictCodeSystemAndBranchCaches() {
+	void deleteCodeSystemShouldEvictCodeSystemAndBranchCaches() throws ServiceException {
 		codeSystemService.createCodeSystem(new CodeSystem("SNOMEDCT", "MAIN"));
 		CodeSystem extension = codeSystemService.createCodeSystem(new CodeSystem("SNOMEDCT-TEST", "MAIN/SNOMEDCT-TEST"));
 		codeSystemQueryService.findAllStored();
 		codeSystemService.findAllCodeSystemBranchesUsingCache();
 		assertCodeSystemCachesPresent();
 
-		codeSystemService.deleteCodeSystemAndVersions(extension);
+		codeSystemService.deleteCodeSystemAndVersions(extension, false);
 		assertCodeSystemCachesEmpty();
 	}
 
-	private void createAndPrimeCaches() {
+	private void createAndPrimeCaches() throws ServiceException {
 		codeSystemService.createCodeSystem(new CodeSystem("SNOMEDCT", "MAIN"));
 		codeSystemQueryService.findAllStored();
 		codeSystemService.findAllCodeSystemBranchesUsingCache();

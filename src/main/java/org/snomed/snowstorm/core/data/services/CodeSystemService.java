@@ -25,9 +25,9 @@ import org.snomed.snowstorm.core.util.AggregationUtils;
 import org.snomed.snowstorm.core.util.DateUtil;
 import org.snomed.snowstorm.core.util.LangUtil;
 import org.snomed.snowstorm.rest.pojo.CodeSystemUpdateRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
@@ -76,7 +76,7 @@ public class CodeSystemService {
 
 	private final CodeSystemRepository repository;
 	private final CodeSystemVersionRepository versionRepository;
-	private final CodeSystemConfigurationService codeSystemConfigurationService;
+	private final CodeSystemDefaultConfigurationService codeSystemDefaultConfigurationService;
 	private final CodeSystemQueryService codeSystemQueryService;
 	private final BranchService branchService;
 	private final SBranchService sBranchService;
@@ -87,7 +87,11 @@ public class CodeSystemService {
 	private final ValidatorService validatorService;
 	private final ModelMapper modelMapper;
 	private final JmsTemplate jmsTemplate;
-	private final AdminOperationsService adminOperationsService;
+
+	@Autowired
+	@Lazy
+	private AdminOperationsService adminOperationsService;
+
 	@Value("${jms.queue.prefix}")
 	private String jmsQueuePrefix;
 
@@ -109,21 +113,20 @@ public class CodeSystemService {
 	public CodeSystemService(
 			CodeSystemRepository repository,
 			CodeSystemVersionRepository versionRepository,
-			CodeSystemConfigurationService codeSystemConfigurationService,
+			CodeSystemDefaultConfigurationService codeSystemDefaultConfigurationService,
 			CodeSystemQueryService codeSystemQueryService,
 			BranchService branchService,
-			SBranchService sBranchService,
+			@Lazy SBranchService sBranchService,
 			@Lazy ReleaseService releaseService,
 			ConceptService conceptService,
 			ElasticsearchOperations elasticsearchOperations,
 			VersionControlHelper versionControlHelper,
 			ValidatorService validatorService,
 			ModelMapper modelMapper,
-			JmsTemplate jmsTemplate,
-			@Lazy AdminOperationsService adminOperationsService) {
+			JmsTemplate jmsTemplate) {
 		this.repository = repository;
 		this.versionRepository = versionRepository;
-		this.codeSystemConfigurationService = codeSystemConfigurationService;
+		this.codeSystemDefaultConfigurationService = codeSystemDefaultConfigurationService;
 		this.codeSystemQueryService = codeSystemQueryService;
 		this.branchService = branchService;
 		this.sBranchService = sBranchService;
@@ -134,7 +137,6 @@ public class CodeSystemService {
 		this.validatorService = validatorService;
 		this.modelMapper = modelMapper;
 		this.jmsTemplate = jmsTemplate;
-		this.adminOperationsService = adminOperationsService;
 	}
 
 	// Cache to prevent expensive aggregations. Entry per branch. Expires if there is a new commit.
