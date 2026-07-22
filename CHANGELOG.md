@@ -3,6 +3,27 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 10.12.3-SNAPSHOT SnowstormX (July 2026)
+Rebased onto Snowstorm release-candidate 10.12.2.
+
+### Inherited from upstream 10.12.x
+- MAINT-2634 Elision support
+- MAINT-3024 Country name on CodeSystem
+- PIP-962 Lightweight CodeSystem caching
+- VAL-432 Drools Annotation support
+- MAINT-2756 Query reference set configuration
+- MAINT-3059 JMS branch cache clear on new authoring cycle
+- MAINT-3091 Published annotation update fix
+- MAINT-3110 Java 25 build compatibility (drools-mvel override)
+
+### SnowstormX features retained
+- Postcoordination and expression supplement (ISTO-64/65)
+- SNOMED CT syndication and FHIR dashboard (ISTO-128)
+- FHIR Batch validate-code support
+- FHIR $subsumes SNOMED edition resolution without version
+- Multiple code system dependencies
+- Elasticsearch client 8.19.14 and parent BOM 3.14.1 overrides
+
 ## 10.12.1 Release (June 2026)
 Maintenance release with bug fixes.
 

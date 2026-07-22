@@ -6,7 +6,7 @@
 	<description>Terminology Server using Elasticsearch with advanced SNOMED CT features</description>
 
 	<artifactId>snowstorm-x</artifactId>
-	<version>10.11.13-SNAPSHOT</version>
+	<version>10.12.3-SNAPSHOT</version>
 	<parent>
 		<groupId>org.snomed</groupId>
 		<artifactId>snomed-parent-bom</artifactId>
