@@ -12,6 +12,7 @@ import org.snomed.snowstorm.core.data.services.CodeSystemService;
 import org.snomed.snowstorm.core.data.services.ConceptService;
 import org.snomed.snowstorm.fhir.pojo.FHIRCodeSystemVersionParams;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
 
@@ -20,9 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.snomed.snowstorm.fhir.config.FHIRConstants.SNOMED_URI;
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class FHIRCodeSystemProviderSubsumesTest extends AbstractFHIRTest {
 
-	private static final String WK_ONLY_CONCEPT = "2577511006";
+	private static final String WK_ONLY_CONCEPT = "25775111006";
 	private static final String BR_ONLY_CONCEPT = "25775999006";
 	private static final int BR_VERSION = 20190831;
 
@@ -77,6 +79,7 @@ class FHIRCodeSystemProviderSubsumesTest extends AbstractFHIRTest {
 		removeInternationalPublishedVersion();
 		codeSystemService.getOrCreateEmpty2000Version();
 
+		// FHIR must not use the empty 2000 placeholder; fall back to another loaded edition
 		String url = baseUrl + "/CodeSystem/$subsumes?system=http://snomed.info/sct&codeA=" + Concepts.SNOMEDCT_ROOT + "&codeB=" + sampleSCTID;
 		Parameters p = getParameters(url);
 		assertEquals("subsumes", toString(getProperty(p, "outcome")));
@@ -100,7 +103,9 @@ class FHIRCodeSystemProviderSubsumesTest extends AbstractFHIRTest {
 	private void removeInternationalPublishedVersion() {
 		CodeSystem international = codeSystemService.find("SNOMEDCT");
 		CodeSystemVersion internationalVersion = codeSystemService.findVersion("SNOMEDCT", 20190131);
-		codeSystemService.deleteVersion(international, internationalVersion);
+		if (internationalVersion != null) {
+			codeSystemService.deleteVersion(international, internationalVersion);
+		}
 	}
 
 	private void createBrazilExtensionWithUniqueConcept() throws Exception {

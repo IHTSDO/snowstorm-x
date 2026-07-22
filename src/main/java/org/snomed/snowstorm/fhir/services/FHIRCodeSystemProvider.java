@@ -177,6 +177,7 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 				sortOn.stream().map(comparatorMap::get).reduce(Comparator::thenComparing).orElseGet(() -> Comparator.comparing(CodeSystem::getId));
 
 		Stream<CodeSystem> snomedCodeSystemStream = snomedMultiSearchService.getAllPublishedVersions().stream()
+				.filter(codeSystemVersion -> !CodeSystemService.isEmpty2000Version(codeSystemVersion))
 				.map(snomedSystemVersion -> new FHIRCodeSystemVersion(snomedSystemVersion).toHapiCodeSystem());
 
 		Stream<CodeSystem> snomedPostcoordinatedStream = snomedCodeSystemService.findAllPostcoordinatedBrief().stream()
@@ -206,6 +207,7 @@ public class FHIRCodeSystemProvider implements IResourceProvider, FHIRConstants 
 			}
 		} else {
 			Stream<FHIRCodeSystemVersion> snomedPublished = snomedMultiSearchService.getAllPublishedVersions().stream()
+					.filter(codeSystemVersion -> !CodeSystemService.isEmpty2000Version(codeSystemVersion))
 					.map(FHIRCodeSystemVersion::new);
 			Stream<FHIRCodeSystemVersion> snomedPostcoordinated = snomedCodeSystemService.findAllPostcoordinatedBrief().stream()
 					.map(FHIRCodeSystemVersion::new);

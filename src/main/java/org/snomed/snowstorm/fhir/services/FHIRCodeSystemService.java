@@ -275,13 +275,13 @@ public class FHIRCodeSystemService {
 			CodeSystemVersion snomedVersion;
 			if (version == null) {
 				// Use the latest published branch
-				snomedVersion = snomedCodeSystemService.findLatestVisibleVersion(shortName);
+				snomedVersion = findLatestVisibleSnomedVersionForFhir(shortName);
 				if (snomedVersion == null) {
-					// Fall back to any imported version
-					snomedVersion = snomedCodeSystemService.findLatestImportedVersion(shortName);
+					// Fall back to any imported version except the empty 2000 placeholder used for syndication import
+					snomedVersion = findLatestImportedSnomedVersionForFhir(shortName);
 				}
 				if (snomedVersion == null && snomedModule == null) {
-					snomedVersion = snomedCodeSystemService.findLatestVisibleVersionOfAnyEdition();
+					snomedVersion = findLatestVisibleSnomedVersionOfAnyEditionForFhir();
 					if (snomedVersion != null) {
 						snomedCodeSystem = snomedVersion.getCodeSystem();
 					}
@@ -292,7 +292,7 @@ public class FHIRCodeSystemService {
 				}
 			} else {
 				snomedVersion = snomedCodeSystemService.findVersion(shortName, Integer.parseInt(version));
-				if (snomedVersion == null) {
+				if (snomedVersion == null || CodeSystemService.isEmpty2000Version(snomedVersion)) {
 					throw exception(format("The requested CodeSystem version %s was not found.", params.toDiagnosticString()), OperationOutcome.IssueType.NOTFOUND, 404);
 				}
 			}
@@ -323,9 +323,11 @@ public class FHIRCodeSystemService {
 		for (org.snomed.snowstorm.core.data.domain.CodeSystem edition : editions) {
 			List<CodeSystemVersion> editionVersions = snomedCodeSystemService.findAllVersions(edition.getShortName(), true, true);
 			for (CodeSystemVersion editionVersion : editionVersions) {
-				editionVersion.setCodeSystem(edition);
+				if (!CodeSystemService.isEmpty2000Version(editionVersion)) {
+					editionVersion.setCodeSystem(edition);
+					allVersions.add(editionVersion);
+				}
 			}
-			allVersions.addAll(editionVersions);
 		}
 		return allVersions;
 	}
@@ -400,14 +402,42 @@ public class FHIRCodeSystemService {
 
 	private void addCandidateEdition(List<FHIRCodeSystemVersion> candidates, Set<String> seenShortNames,
 			org.snomed.snowstorm.core.data.domain.CodeSystem codeSystem) {
-		CodeSystemVersion version = snomedCodeSystemService.findLatestVisibleVersion(codeSystem.getShortName());
+		CodeSystemVersion version = findLatestVisibleSnomedVersionForFhir(codeSystem.getShortName());
 		if (version == null) {
-			version = snomedCodeSystemService.findLatestImportedVersion(codeSystem.getShortName());
+			version = findLatestImportedSnomedVersionForFhir(codeSystem.getShortName());
 		}
 		if (version != null && seenShortNames.add(codeSystem.getShortName())) {
 			version.setCodeSystem(codeSystem);
 			candidates.add(new FHIRCodeSystemVersion(version));
 		}
+	}
+
+	private CodeSystemVersion findLatestVisibleSnomedVersionForFhir(String shortName) {
+		CodeSystemVersion version = snomedCodeSystemService.findLatestVisibleVersion(shortName);
+		return CodeSystemService.isEmpty2000Version(version) ? null : version;
+	}
+
+	private CodeSystemVersion findLatestImportedSnomedVersionForFhir(String shortName) {
+		for (CodeSystemVersion version : snomedCodeSystemService.findAllVersions(shortName, false, true, true)) {
+			if (!CodeSystemService.isEmpty2000Version(version)) {
+				return version;
+			}
+		}
+		return null;
+	}
+
+	private CodeSystemVersion findLatestVisibleSnomedVersionOfAnyEditionForFhir() {
+		for (org.snomed.snowstorm.core.data.domain.CodeSystem codeSystem : snomedCodeSystemService.findAll()) {
+			if (codeSystem.isPostcoordinatedNullSafe()) {
+				continue;
+			}
+			CodeSystemVersion version = findLatestVisibleSnomedVersionForFhir(codeSystem.getShortName());
+			if (version != null) {
+				version.setCodeSystem(codeSystem);
+				return version;
+			}
+		}
+		return null;
 	}
 
 	private void addCandidateEditionFromConceptPath(List<FHIRCodeSystemVersion> candidates, Set<String> seenShortNames, String branchPath) {
