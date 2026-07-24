@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## 10.11.13 SnowstormX Release (July 2026)
+Security fix release.
+
+### Fixes
+
+- MAINT-3110 Fix reflected XSS in `/web-route` error responses by returning errors as structured JSON/XML instead of raw text
+
+
 ## 10.11.12 SnowstormX Release (July 2026)
 Maintenance release with security fixes and general improvements.
 
