@@ -33,7 +33,7 @@
 		<gson.version>2.13.2</gson.version>
 		<libthrift.version>0.23.0</libthrift.version>
 		<protobuf.version>4.30.0</protobuf.version>
-		<log4j2.version>2.26.0</log4j2.version>
+		<log4j2.version>2.26.1</log4j2.version>
 		<postgresql.version>42.7.12</postgresql.version>
 		<httpcore5.version>5.4.3</httpcore5.version>
 
